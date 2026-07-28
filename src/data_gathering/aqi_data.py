@@ -2,7 +2,7 @@ import logging
 import time
 import requests
 import pandas as pd
-from cities import city_coords
+from src.city_info import city_info
 from pathlib import Path
 
 import yaml
@@ -87,9 +87,9 @@ start_date = params["data-gathering"]["start-date"]
 end_date = params["data-gathering"]["end-date"]
 all_cities_data = []
 
-for i, (city, info) in enumerate(city_coords.items(), start=1):
+for i, (city, info) in enumerate(city_info.items(), start=1):
     try:
-        logger.info(f"[{i}/{len(city_coords)}] Fetching {city}")
+        logger.info(f"[{i}/{len(city_info)}] Fetching {city}")
 
         df_city = fetch_aqi_data(
             city_name=city,

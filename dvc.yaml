@@ -23,3 +23,14 @@ stages:
       - data/raw/weather_data.csv
     outs:
       - data/interim/merged_data.csv
+  feature_engineering:
+    cmd: python src/feature_engineering/build_features.py
+    deps:
+      - src/feature_engineering/build_features.py
+      - src/feature_engineering/temporal_features.py
+      - src/feature_engineering/region.py
+      - src/feature_engineering/city_to_region.py
+      - src/feature_engineering/weather_features.py
+      - data/interim/merged_data.csv
+    outs:
+      - data/processed/engineered_features.csv
