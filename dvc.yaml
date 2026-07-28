@@ -1,36 +1,40 @@
 stages:
   fetch_aqi_data:
-    cmd: python src/data-gathering/aqi_data.py
+    cmd: python -m src.data_gathering.aqi_data
     deps:
-      - src/data-gathering/aqi_data.py
-      - src/data-gathering/cities.py
+      - src/data_gathering/aqi_data.py
+      - src/city_info.py
       - params.yaml
     outs:
       - data/raw/aqi_data.csv
+
   fetch_weather_data:
-    cmd: python src/data-gathering/weather_data.py
+    cmd: python -m src.data_gathering.weather_data
     deps:
-      - src/data-gathering/weather_data.py
-      - src/data-gathering/cities.py
+      - src/data_gathering/weather_data.py
+      - src/city_info.py
       - params.yaml
     outs:
       - data/raw/weather_data.csv
+
   preprocess_data:
-    cmd: python src/data-preprocessing/preprocessing.py
+    cmd: python -m src.data_preprocessing.preprocessing
     deps:
-      - src/data-preprocessing/preprocessing.py
+      - src/data_preprocessing/preprocessing.py
       - data/raw/aqi_data.csv
       - data/raw/weather_data.csv
     outs:
       - data/interim/merged_data.csv
+
   feature_engineering:
-    cmd: python src/feature_engineering/build_features.py
+    cmd: python -m src.feature_engineering.build_features
     deps:
       - src/feature_engineering/build_features.py
       - src/feature_engineering/temporal_features.py
       - src/feature_engineering/region.py
       - src/feature_engineering/city_to_region.py
       - src/feature_engineering/weather_features.py
+      - src/city_info.py
       - data/interim/merged_data.csv
     outs:
       - data/processed/engineered_features.csv
