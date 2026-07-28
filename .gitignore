@@ -5,6 +5,7 @@ logs/
 # Data
 data/raw/
 data/processed/
+data/interim/
 
 # Python
 __pycache__/

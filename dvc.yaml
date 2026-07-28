@@ -15,3 +15,11 @@ stages:
       - params.yaml
     outs:
       - data/raw/weather_data.csv
+  preprocess_data:
+    cmd: python src/data-preprocessing/preprocessing.py
+    deps:
+      - src/data-preprocessing/preprocessing.py
+      - data/raw/aqi_data.csv
+      - data/raw/weather_data.csv
+    outs:
+      - data/interim/merged_data.csv

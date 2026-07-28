@@ -122,5 +122,5 @@ DATA_DIR = ROOT_DIR / "data" / "raw"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-india_aqi_df.to_csv(DATA_DIR / "india_aqi.csv", index=False)
-logger.info("Dataset saved to data/raw/india_aqi.csv")
+india_aqi_df.to_csv(DATA_DIR / "aqi_data.csv", index=False)
+logger.info("Dataset saved to data/raw/aqi_data.csv")

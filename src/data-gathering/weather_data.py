@@ -131,5 +131,5 @@ DATA_DIR = ROOT_DIR / "data" / "raw"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-india_weather_df.to_csv(DATA_DIR / "india_weather.csv", index=False)
-logger.info("Dataset saved to data/raw/india_weather.csv")
+india_weather_df.to_csv(DATA_DIR / "weather_data.csv", index=False)
+logger.info("Dataset saved to data/raw/weather_data.csv")
