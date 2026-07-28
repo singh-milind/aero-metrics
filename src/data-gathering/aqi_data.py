@@ -5,6 +5,11 @@ import pandas as pd
 from cities import city_coords
 from pathlib import Path
 
+import yaml
+
+with open("params.yaml", "r") as f:
+    params = yaml.safe_load(f)
+
 ROOT_DIR = Path(__file__).resolve().parents[2]
 LOG_DIR = ROOT_DIR / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -78,6 +83,8 @@ def fetch_aqi_data(city_name, lat, lon, start_date, end_date):
     return None
 
 
+start_date = params["data-gathering"]["start-date"]
+end_date = params["data-gathering"]["end-date"]
 all_cities_data = []
 
 for i, (city, info) in enumerate(city_coords.items(), start=1):
@@ -88,8 +95,8 @@ for i, (city, info) in enumerate(city_coords.items(), start=1):
             city_name=city,
             lat=info["lat"],
             lon=info["lon"],
-            start_date="2021-01-01",
-            end_date="2026-06-30"
+            start_date=start_date,
+            end_date=end_date
         )
 
         if df_city is not None:

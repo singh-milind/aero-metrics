@@ -1,0 +1,9 @@
+stages:
+  fetch_aqi_data:
+    cmd: python src/data-gathering/aqi_data.py
+    deps:
+      - src/data-gathering/aqi_data.py
+      - src/data-gathering/cities.py
+      - params.yaml
+    outs:
+      - data/raw/aqi_data.csv
