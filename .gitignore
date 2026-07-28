@@ -1,0 +1,12 @@
+# Logs
+logs/
+*.log
+
+# Data
+data/raw/
+data/processed/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
