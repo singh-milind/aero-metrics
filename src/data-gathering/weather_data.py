@@ -25,11 +25,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-#weather_api
 def fetch_weather_data(city_name, lat, lon, start_date, end_date):
-    print(f"Fetching Weather data for {city_name}...")
+    logger.info(f"Fetching weather data for {city_name}...")
 
-    # Open-Meteo Historical Weather Endpoint
     url = "https://archive-api.open-meteo.com/v1/archive"
 
     params = {
@@ -37,63 +35,101 @@ def fetch_weather_data(city_name, lat, lon, start_date, end_date):
         "longitude": lon,
         "start_date": start_date,
         "end_date": end_date,
-        "hourly": ["temperature_2m", "relative_humidity_2m", "wind_speed_10m",
-                   "wind_direction_10m", "precipitation", "surface_pressure"],
-        "timezone": "auto"
+        "hourly": [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "wind_speed_10m",
+            "wind_direction_10m",
+            "precipitation",
+            "surface_pressure",
+        ],
+        "timezone": "auto",
     }
 
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
 
-    if response.status_code != 200:
-        print(f"Failed to fetch data: {response.status_code}")
-        return None
+        data = response.json()
+        df = pd.DataFrame(data["hourly"])
 
-    data = response.json()
-    df = pd.DataFrame(data['hourly'])
+        df["time"] = pd.to_datetime(df["time"])
+        df.set_index("time", inplace=True)
 
-    # Convert time string to Datetime and set as index
-    df['time'] = pd.to_datetime(df['time'])
-    df.set_index('time', inplace=True)
+        aggregation_logic = {
+            "temperature_2m": "mean",
+            "relative_humidity_2m": "mean",
+            "wind_speed_10m": "mean",
+            "wind_direction_10m": "mean",
+            "precipitation": "sum",
+            "surface_pressure": "mean",
+        }
 
-    # The Smart Resampling Dictionary
-    aggregation_logic = {
-        'temperature_2m': 'mean',
-        'relative_humidity_2m': 'mean',
-        'wind_speed_10m': 'mean',
-        'wind_direction_10m': 'mean',
-        'precipitation': 'sum',
-        'surface_pressure': 'mean'
-    }
+        df_4x_daily = (
+            df.resample("6h")
+            .agg(aggregation_logic)
+            .reset_index()
+        )
 
-    # Group into 4 parts of the day (6-hour blocks) using the logic above
-    df_4x_daily = df.resample('6h').agg(aggregation_logic).reset_index()
+        df_4x_daily.insert(1, "city", city_name)
+        df_4x_daily.dropna(inplace=True)
 
-    # Add the City name
-    df_4x_daily.insert(1, 'city', city_name)
-    df_4x_daily.dropna(inplace=True)
+        logger.info(
+            f"Successfully extracted {len(df_4x_daily)} weather records for {city_name}"
+        )
 
-    print(f"Success! Extracted {len(df_4x_daily)} weather rows for {city_name}.")
-    return df_4x_daily
+        return df_4x_daily
 
+    except requests.exceptions.Timeout:
+        logger.error(f"Request timed out while fetching {city_name}")
+
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error for {city_name}: {e}")
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed for {city_name}: {e}")
+
+    except Exception as e:
+        logger.exception(f"Unexpected error while processing {city_name}: {e}")
+
+    return None
 
 start_date = params["data-gathering"]["start-date"]
 end_date = params["data-gathering"]["end-date"]
 all_cities_data = []
 
-for capital, info in city_coords.items():
-    # Fetch 5 years of data for the specific city
-    df_city = fetch_weather_data(
-        city_name=capital,
-        lat=info['lat'],
-        lon=info['lon'],
-        start_date=start_date,
-        end_date=end_date
-    )
+for i, (city, info) in enumerate(city_coords.items(), start=1):
+    logger.info(f"[{i}/{len(city_coords)}] Processing {city}")
 
-    if df_city is not None:
-        all_cities_data.append(df_city)
-    print("Pausing for 5 seconds to respect API limits...")
+    try:
+        df_city = fetch_weather_data(
+            city_name=city,
+            lat=info["lat"],
+            lon=info["lon"],
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        if df_city is not None:
+            all_cities_data.append(df_city)
+
+    except Exception:
+        logger.exception(f"Failed to process {city}")
+
+    logger.info("Sleeping 5 seconds before next request...")
     time.sleep(5)
 
-# Combine all DataFrames into one massive Master Dataset
-master_india_weather_df = pd.concat(all_cities_data, ignore_index=True)
+if all_cities_data:
+    india_weather_df = pd.concat(all_cities_data, ignore_index=True)
+    logger.info(f"Final dataset shape: {india_weather_df.shape}")
+else:
+    logger.error("No data fetched.")
+    india_weather_df = pd.DataFrame()
+
+
+DATA_DIR = ROOT_DIR / "data" / "raw"
+
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+india_weather_df.to_csv(DATA_DIR / "india_weather.csv", index=False)
+logger.info("Dataset saved to data/raw/india_weather.csv")

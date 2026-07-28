@@ -7,3 +7,11 @@ stages:
       - params.yaml
     outs:
       - data/raw/aqi_data.csv
+  fetch_weather_data:
+    cmd: python src/data-gathering/weather_data.py
+    deps:
+      - src/data-gathering/weather_data.py
+      - src/data-gathering/cities.py
+      - params.yaml
+    outs:
+      - data/raw/weather_data.csv
