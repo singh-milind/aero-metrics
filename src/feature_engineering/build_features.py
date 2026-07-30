@@ -11,7 +11,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 
 logger = get_logger("feature_engineering")
 
-def load_data():
+def load_data(logger):
     INTERIM_DATA_DIR = ROOT_DIR / "data" / "interim"
     INTERIM_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -26,7 +26,7 @@ def load_data():
         raise  
     return df
 
-def save_data(df):
+def save_data(df, logger):
     PROCESSED_DATA_DIR = ROOT_DIR / "data" / "processed"
     PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -40,13 +40,13 @@ def save_data(df):
 
 def main():
         try:
-            df = load_data()
+            df = load_data(logger)
             logger.info(f"Loaded {len(df):,} rows.")
             df = add_time_features(df, logger)
             df = apply_weather_verdict(df, logger)
             df = region_map(df, logger)
             df = apply_regional_season(df, logger)
-            save_data(df)
+            save_data(df, logger)
             logger.info(f"Feature engineering completed. Final dataset has {len(df):,} rows.")
         except Exception:
             logger.exception("Feature engineering pipeline failed.")

@@ -11,7 +11,7 @@ def get_time_of_day(hour):
     else:  # 18 to 23
         return 'Evening'
 
-def add_time_features(df):
+def add_time_features(df, logger):
     df["time"] = pd.to_datetime(df["time"])
     df["month"] = df["time"].dt.month
     df["hour"] = df["time"].dt.hour
@@ -20,6 +20,7 @@ def add_time_features(df):
     df["is_weekend"] = (
         df["time"].dt.dayofweek.isin([5, 6]).astype(int)
     )
+    logger.info("Time features added successfully.")
 
     return df
 
