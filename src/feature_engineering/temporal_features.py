@@ -75,11 +75,11 @@ def get_regional_season(row, logger):
         raise
 
 
-def apply_regional_season(df):
+def apply_regional_season(df, logger):
     logger.info("Generating regional season feature...")
 
     try:
-        df["regional_season"] = df.apply(get_regional_season, axis=1)
+        df["regional_season"] = df.apply(get_regional_season, axis=1, logger=logger)
         logger.info("Regional season feature created successfully.")
     except Exception:
         logger.exception("Failed to generate regional season feature.")
