@@ -1,30 +1,15 @@
 
 import pandas as pd
 import numpy as np
-import logging
 from pathlib import Path
 from .weather_features import apply_weather_verdict
 from .region import region_map
 from .temporal_features import apply_regional_season,add_time_features
-
+from src.utils.logger import get_logger
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
-LOG_DIR = ROOT_DIR / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "feature_engineering.log"),
-        logging.StreamHandler()
-    ]
-)
-
-
-logger = logging.getLogger(__name__)
-
+logger = get_logger("feature_engineering")
 
 def load_data():
     INTERIM_DATA_DIR = ROOT_DIR / "data" / "interim"
@@ -57,10 +42,10 @@ def main():
         try:
             df = load_data()
             logger.info(f"Loaded {len(df):,} rows.")
-            df = add_time_features(df)
-            df = apply_weather_verdict(df)
-            df = region_map(df)
-            df = apply_regional_season(df)
+            df = add_time_features(df, logger)
+            df = apply_weather_verdict(df, logger)
+            df = region_map(df, logger)
+            df = apply_regional_season(df, logger)
             save_data(df)
             logger.info(f"Feature engineering completed. Final dataset has {len(df):,} rows.")
         except Exception:

@@ -1,4 +1,4 @@
-from asyncio.log import logger
+
 import pandas as pd
 
 def get_time_of_day(hour):
@@ -23,7 +23,7 @@ def add_time_features(df):
 
     return df
 
-def get_regional_season(row):
+def get_regional_season(row, logger):
     try:
         month = row["month"]
         region = row["region"]

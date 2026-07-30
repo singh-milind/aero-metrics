@@ -1,6 +1,6 @@
-from asyncio.log import logger
 
-def get_weather_verdict(row):
+
+def get_weather_verdict(row,logger):
     try:
         temp = row["temperature_2m"]
         humidity = row["relative_humidity_2m"]
@@ -33,11 +33,11 @@ def get_weather_verdict(row):
         raise
 
 
-def apply_weather_verdict(df):
+def apply_weather_verdict(df,logger):
     logger.info("Generating weather verdict feature...")
 
     try:
-        df["weather_verdict"] = df.apply(get_weather_verdict, axis=1)
+        df["weather_verdict"] = df.apply(get_weather_verdict, axis=1, logger=logger)
         logger.info("Weather verdict feature created successfully.")
     except Exception:
         logger.exception("Failed to generate weather verdict feature.")

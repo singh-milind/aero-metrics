@@ -1,25 +1,14 @@
 from asyncio.log import logger
 import pandas as pd
 import numpy as np
-import logging
-from pathlib import Path
 
+from pathlib import Path
+from src.utils.logger import get_logger
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
-LOG_DIR = ROOT_DIR / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "preprocessing.log"),
-        logging.StreamHandler()
-    ]
-)
-
+logger = get_logger("preprocessing")
 
 RAW_DATA_DIR = ROOT_DIR / "data" / "raw"
 

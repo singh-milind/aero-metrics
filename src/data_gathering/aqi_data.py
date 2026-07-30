@@ -1,9 +1,10 @@
-import logging
+
 import time
 import requests
 import pandas as pd
 from src.city_info import city_info
 from pathlib import Path
+from src.utils.logger import get_logger
 
 import yaml
 
@@ -11,19 +12,7 @@ with open("params.yaml", "r") as f:
     params = yaml.safe_load(f)
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-LOG_DIR = ROOT_DIR / "logs"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_DIR / "aqi_fetch.log"),
-        logging.StreamHandler()
-    ]
-)
-
-logger = logging.getLogger(__name__)
+logger = get_logger("aqi_fetch")
 
 
 
