@@ -38,3 +38,12 @@ stages:
       - data/interim/merged_data.csv
     outs:
       - data/processed/engineered_features.csv
+  train_pm25_model:
+    cmd: python -m src.model_building.pm25_model.pm25_model
+    deps:
+      - src/model_building/pm25_model/train_model.py
+      - src/model_building/pm25_model/split_data.py
+      - src/model_building/pm25_model/build_more_features.py
+      - data/processed/engineered_features.csv
+    outs:
+      - models/pm25_model.pkl
