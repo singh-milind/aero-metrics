@@ -1,5 +1,5 @@
 
-from .city_to_region import CITY_TO_REGION
+from src.feature_engineering.city_to_region import CITY_TO_REGION
 
 def region_map(df,logger):
     logger.info("Mapping cities to regions...")
