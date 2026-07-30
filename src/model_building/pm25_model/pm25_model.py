@@ -3,13 +3,13 @@ import logging
 import pandas as pd
 from pathlib import Path
 from src.utils.logger import get_logger
-from .build_more_features import build_more_features
-from .split_data import split_data
-from .train_model import train_model
+from src.model_building.pm25_model.build_more_features import build_more_features
+from src.model_building.pm25_model.split_data import split_data
+from src.model_building.pm25_model.train_model import train_model
 
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
+ROOT_DIR = Path(__file__).resolve().parents[3]
 logger = get_logger("pm25_model")
 
 
@@ -31,9 +31,10 @@ def load_data(logger):
 
 def main():
     df = load_data(logger)
-    df = build_more_features(df,logger)
-    df = split_data(df,logger)
-    model = train_model(df,logger)
+    X,Y= build_more_features(df,logger)
+    X_train, X_test, y_train, y_test = split_data(X, Y, logger)
+    model = train_model(X_train, y_train, logger)
 
 if __name__ == "__main__":
     main()
+    

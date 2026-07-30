@@ -7,10 +7,10 @@ def build_more_features(df,logger):
     try:
         logger.info("Starting feature engineering...")
 
-        columns_to_drop = ["pm2_5", "pm10", "time"]
+        columns_to_drop = [ "pm2_5", "pm10", "time"]
 
         X = df.drop(columns=columns_to_drop)
-        y = df["pm2_5"]
+        Y = df['pm2_5']
 
         # Feature Interactions
 
@@ -41,7 +41,17 @@ def build_more_features(df,logger):
         X.drop(columns=["wind_direction_10m"], inplace=True)
 
         # Cyclic Features
+        day_map = {
+            "Monday": 0,
+            "Tuesday": 1,
+            "Wednesday": 2,
+            "Thursday": 3,
+            "Friday": 4,
+            "Saturday": 5,
+            "Sunday": 6,
+        }
 
+        X["day_of_week"] = X["day_of_week"].map(day_map)
         logger.info("Encoding cyclic time features...")
 
         X["dow_sin"] = np.sin(2 * np.pi * X["day_of_week"] / 7)
@@ -70,8 +80,9 @@ def build_more_features(df,logger):
         X[categorical_cols] = X[categorical_cols].astype("category")
 
         logger.info("Feature engineering completed successfully.")
+        X.to_csv("data/interim/feature_engineered_data.csv", index=False)
 
-        return X, y
+        return X, Y
 
     except Exception as e:
         logger.exception("Error during feature engineering.")
