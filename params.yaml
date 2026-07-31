@@ -4,14 +4,14 @@ data-gathering:
 pm25_model:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 900        # Give it plenty of room; Early Stopping will halt it safely
-    max_depth: 8              # CHOPPED DOWN from 24 to 6 (Crucial fix!)
-    learning_rate: 0.05     # Slower, more stable learning
-    subsample: 0.9            # Uses 80% rows per tree to prevent overfitting
-    colsample_bytree: 0.9     # Uses 80% features per tree
-    min_child_weight: 8       # Increased to prevent highly specific splits
-    reg_alpha: 0.3            # L1 Regularization (Lasso)
-    reg_lambda: 1.0           # L2 Regularization (Ridge)
+    n_estimators: 900     # Give it plenty of room; Early Stopping will halt it safely
+    max_depth: 7              # CHOPPED DOWN from 24 to 6 (Crucial fix!)
+    learning_rate: 0.035    # Slower, more stable learning
+    subsample: 1.0            # Uses 80% rows per tree to prevent overfitting
+    colsample_bytree: 1.0    # Uses 80% features per tree
+    min_child_weight: 15     # Increased to prevent highly specific splits
+    reg_alpha: 0.5            # L1 Regularization (Lasso)
+    reg_lambda: 10           # L2 Regularization (Ridge)
     objective: reg:squarederror
     random_state: 42  # Enable categorical feature support
-    #early_stopping_rounds: 30  # Stops training if test score doesn't improve for 30 rounds
+    #early_stopping_rounds: 80  # Stops training if test score doesn't improve for 30 rounds

@@ -17,6 +17,7 @@ def build_more_features(df,logger):
         logger.info("Creating interaction features...")
 
         X["season_region"] = X["regional_season"].astype(str) + "_" + X["region"].astype(str)
+        X["season_city"] = X["regional_season"].astype(str) + "_" + X["city"].astype(str)
         X.drop(columns=["regional_season", "region"], inplace=True)
 
         X["temp_humidity"] = (
@@ -75,13 +76,12 @@ def build_more_features(df,logger):
             "weather_verdict",
             "time_of_day",
             "season_region",
+            "season_city",
         ]
 
         X[categorical_cols] = X[categorical_cols].astype("category")
 
         logger.info("Feature engineering completed successfully.")
-        X.to_csv("data/interim/feature_engineered_data.csv", index=False)
-
         return X, Y
 
     except Exception as e:
