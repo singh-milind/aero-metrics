@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 from pathlib import Path
 from src.utils.logger import get_logger
-from src.model_building.predictor.pm25_model.build_more_features import build_more_features
+from model_building.predictor.pm25_model.runtime_features import build_more_features
 from src.model_building.predictor.pm25_model.split_data import split_data
 from src.model_building.predictor.pm25_model.train_model import train_model
 
