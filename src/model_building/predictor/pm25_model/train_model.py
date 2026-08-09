@@ -112,11 +112,6 @@ def train_model(x_train, y_train, logger):
         mlflow.log_metric("best_train_r2", train_scores.max())
         mlflow.log_metric("worst_train_r2", train_scores.min())
 
-        for i in range(5):
-            mlflow.log_metric(f"fold_{i+1}_train_r2", train_scores[i])
-            mlflow.log_metric(f"fold_{i+1}_cv_r2", cv_scores[i])
-            mlflow.log_metric(f"fold_{i+1}_gap", train_scores[i] - cv_scores[i])
-
         # Artifacts
         mlflow.log_artifact("feature_importance.png")
         mlflow.log_artifact("cv_results.csv")
