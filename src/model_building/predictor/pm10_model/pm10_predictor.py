@@ -1,4 +1,5 @@
 import logging
+import joblib
 
 import pandas as pd
 from pathlib import Path
@@ -34,6 +35,7 @@ def main():
     X,Y= build_more_features(df,logger)
     X_train, X_test, y_train, y_test = split_data(X, Y, logger)
     model = train_model(X_train, y_train, logger)
+    joblib.dump(model, ROOT_DIR / "src" / "model_building" / "predictor" / "pm10_model" / "pm10_predictor.pkl")
 
 if __name__ == "__main__":
     main()

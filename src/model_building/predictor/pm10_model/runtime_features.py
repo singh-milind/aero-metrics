@@ -10,7 +10,7 @@ def build_more_features(df,logger):
         columns_to_drop = [ "pm2_5", "pm10", "time"]
 
         X = df.drop(columns=columns_to_drop)
-        Y = df['pm2_5']
+        Y = df['pm10']/df['pm2_5']
 
         # Feature Interactions
 

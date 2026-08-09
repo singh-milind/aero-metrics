@@ -48,7 +48,7 @@ stages:
       - src/model_building/predictor/pm25_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_predictor.pkl
+      - src/model_building/predictor/pm25_model/pm25_predictor.pkl
   predictor_train_pm10_model:
     cmd: python -m src.model_building.predictor.pm10_model.pm10_predictor
     deps:
@@ -59,7 +59,7 @@ stages:
       - src/model_building/predictor/pm10_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm10_predictor.pkl
+      - src/model_building/predictor/pm10_model/pm10_predictor.pkl
   forecaster_train_pm25_model:
     cmd: python -m src.model_building.forecaster.pm25_model.pm25_forecaster
     deps:

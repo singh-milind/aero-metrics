@@ -15,3 +15,6 @@ __pycache__/
 
 cv_results.csv
 feature_importance.png
+
+src/model_building/predictor/pm10_model/pm10_predictor.pkl
+src/model_building/predictor/pm25_model/pm25_predictor.pkl
