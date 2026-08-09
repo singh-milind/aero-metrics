@@ -39,8 +39,9 @@ stages:
     outs:
       - data/processed/engineered_features.csv
   predictor_train_pm25_model:
-    cmd: python -m src.model_building.predictor.pm25_model.pm25_model
+    cmd: python -m src.model_building.predictor.pm25_model.pm25_predictor
     deps:
+      - params.yaml
       - src/model_building/predictor/pm25_model/train_model.py
       - src/model_building/predictor/pm25_model/pm25_model.py
       - src/model_building/predictor/pm25_model/split_data.py
@@ -49,8 +50,9 @@ stages:
     outs:
       - models/pm25_predictor.pkl
   predictor_train_pm10_model:
-    cmd: python -m src.model_building.predictor.pm10_model.pm10_model
+    cmd: python -m src.model_building.predictor.pm10_model.pm10_predictor
     deps:
+      - params.yaml
       - src/model_building/predictor/pm10_model/train_model.py
       - src/model_building/predictor/pm10_model/pm10_model.py
       - src/model_building/predictor/pm10_model/split_data.py
@@ -59,8 +61,9 @@ stages:
     outs:
       - models/pm10_predictor.pkl
   forecaster_train_pm25_model:
-    cmd: python -m src.model_building.forecaster.pm25_model.pm25_model
+    cmd: python -m src.model_building.forecaster.pm25_model.pm25_forecaster
     deps:
+      - params.yaml
       - src/model_building/forecaster/pm25_model/train_model.py
       - src/model_building/forecaster/pm25_model/pm25_forecaster.py
       - src/model_building/forecaster/pm25_model/split_data.py
@@ -69,8 +72,9 @@ stages:
     outs:
       - models/pm25_forecaster.pkl
   forecaster_train_pm10_model:
-    cmd: python -m src.model_building.forecaster.pm10_model.pm10_model
+    cmd: python -m src.model_building.forecaster.pm10_model.pm10_forecaster
     deps:
+      - params.yaml
       - src/model_building/forecaster/pm10_model/train_model.py
       - src/model_building/forecaster/pm10_model/pm10_forecaster.py
       - src/model_building/forecaster/pm10_model/split_data.py

@@ -1,7 +1,7 @@
 data-gathering:
-  start-date: 2021-01-01
+  start-date: 2023-06-30
   end-date: 2026-06-30
-pm25_model:
+pm25_predictor:
   model-type: "XGBoost Regressor"
   hyperparameters:
     n_estimators: 900     # Give it plenty of room; Early Stopping will halt it safely
@@ -15,3 +15,16 @@ pm25_model:
     objective: reg:squarederror
     random_state: 42  # Enable categorical feature support
     #early_stopping_rounds: 80  # Stops training if test score doesn't improve for 30 rounds
+pm10_predictor:
+  model-type: "XGBoost Regressor"
+  hyperparameters:
+    n_estimators: 900     # Give it plenty of room; Early Stopping will halt it safely
+    max_depth: 7              # CHOPPED DOWN from 24 to 6 (Crucial fix!)
+    learning_rate: 0.035    # Slower, more stable learning
+    subsample: 1.0            # Uses 80% rows per tree to prevent overfitting
+    colsample_bytree: 1.0    # Uses 80% features per tree
+    min_child_weight: 15     # Increased to prevent highly specific splits
+    reg_alpha: 0.5            # L1 Regularization (Lasso)
+    reg_lambda: 10           # L2 Regularization (Ridge)
+    objective: reg:squarederror
+    random_state: 42  # Enable categorical feature support

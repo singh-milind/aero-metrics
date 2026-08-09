@@ -13,7 +13,7 @@ def train_model(x_train, y_train, logger):
     with open("params.yaml", "r") as f:
         params = yaml.safe_load(f)
 
-    hp = params["pm25_model"]["hyperparameters"]
+    hp = params["pm10_predictor"]["hyperparameters"]
 
     dagshub.init(
         repo_owner="singh-milind",
@@ -24,7 +24,7 @@ def train_model(x_train, y_train, logger):
     mlflow.set_tracking_uri(
         "https://dagshub.com/singh-milind/aero-metrics.mlflow"
     )
-    mlflow.set_experiment("pm25_model_new_features")
+    mlflow.set_experiment("pm10_predictor_new_features")
 
     model = XGBRegressor(
         objective=hp["objective"],
