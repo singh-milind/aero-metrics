@@ -7,6 +7,8 @@ import pandas as pd
 from sklearn.model_selection import KFold, cross_validate
 from xgboost import XGBRegressor, plot_importance
 
+from src.model_building.predictor.common.metrics import make_metrics_dict, dump_metrics_json
+
 
 def train_model(x_train, y_train, logger):
 
@@ -111,7 +113,10 @@ def train_model(x_train, y_train, logger):
     plt.tight_layout()
     plt.savefig("feature_importance.png", dpi=300)
     plt.close()
-
+    
+    metrics = make_metrics_dict(mean_train_r2, mean_cv_r2, mean_train_mae, mean_cv_mae, mean_train_rmse, mean_cv_rmse, std_train_r2, std_cv_r2, std_train_mae, std_cv_mae, std_train_rmse, std_cv_rmse, gap)
+    dump_metrics_json(metrics, model_name="pm25")
+    
     with mlflow.start_run():
 
         # Hyperparameters

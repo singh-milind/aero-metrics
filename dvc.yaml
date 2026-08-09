@@ -42,24 +42,30 @@ stages:
     cmd: python -m src.model_building.predictor.pm25_model.pm25_predictor
     deps:
       - params.yaml
+      - src/model_building/predictor/common/metrics.py
       - src/model_building/predictor/pm25_model/train_model.py
-      - src/model_building/predictor/pm25_model/pm25_model.py
+      - src/model_building/predictor/pm25_model/pm25_predictor.py
       - src/model_building/predictor/pm25_model/split_data.py
       - src/model_building/predictor/pm25_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
       - src/model_building/predictor/pm25_model/pm25_predictor.pkl
+    metrics:
+      - metrics/predictor/pm25_metrics.json
   predictor_train_pm10_model:
     cmd: python -m src.model_building.predictor.pm10_model.pm10_predictor
     deps:
       - params.yaml
+      - src/model_building/predictor/common/metrics.py
       - src/model_building/predictor/pm10_model/train_model.py
-      - src/model_building/predictor/pm10_model/pm10_model.py
+      - src/model_building/predictor/pm10_model/pm10_predictor.py
       - src/model_building/predictor/pm10_model/split_data.py
       - src/model_building/predictor/pm10_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
       - src/model_building/predictor/pm10_model/pm10_predictor.pkl
+    metrics:
+      - metrics/predictor/pm10_metrics.json
   forecaster_train_pm25_model:
     cmd: python -m src.model_building.forecaster.pm25_model.pm25_forecaster
     deps:

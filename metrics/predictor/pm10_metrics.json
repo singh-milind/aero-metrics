@@ -1,0 +1,15 @@
+{
+    "mean_train_r2": 0.9016,
+    "mean_cv_r2": 0.8195,
+    "mean_train_mae": 0.2134,
+    "mean_cv_mae": 0.2661,
+    "mean_train_rmse": 0.3185,
+    "mean_cv_rmse": 0.4312,
+    "std_train_r2": 0.0009,
+    "std_cv_r2": 0.0048,
+    "std_train_mae": 0.0006,
+    "std_cv_mae": 0.0016,
+    "std_train_rmse": 0.0009,
+    "std_cv_rmse": 0.0027,
+    "generalization_gap": 0.0821
+}
