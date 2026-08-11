@@ -28,3 +28,29 @@ pm10_predictor:
     reg_lambda: 10          # L2 Regularization (Ridge)
     objective: reg:squarederror
     random_state: 42  # Enable categorical feature support
+pm25_forecaster_t:
+  model-type: "XGBoost Regressor"
+  hyperparameters:
+    n_estimators: 850     
+    max_depth: 7             
+    learning_rate: 0.035    # Slower, more stable learning
+    subsample: 0.9            
+    colsample_bytree: 0.9    
+    min_child_weight: 8    # Increased to prevent highly specific splits
+    reg_alpha: 0.5            # L1 Regularization (Lasso)
+    reg_lambda: 15.0           # L2 Regularization (Ridge)
+    objective: reg:squarederror
+    random_state: 42
+pm25_forecaster_t12:
+  model-type: "XGBoost Regressor"
+  hyperparameters:
+    n_estimators: 800     
+    max_depth: 7             
+    learning_rate: 0.03    # Slower, more stable learning
+    subsample: 0.85            
+    colsample_bytree: 0.85    
+    min_child_weight: 10   # Increased to prevent highly specific splits
+    reg_alpha: 0.5            # L1 Regularization (Lasso)
+    reg_lambda: 20.0           # L2 Regularization (Ridge)
+    objective: reg:squarederror
+    random_state: 42

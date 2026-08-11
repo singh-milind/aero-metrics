@@ -3,14 +3,14 @@ import logging
 import pandas as pd
 from pathlib import Path
 from src.utils.logger import get_logger
-from model_building.predictor.pm25_model.runtime_features import build_more_features
-from src.model_building.predictor.pm25_model.split_data import split_data
-from src.model_building.predictor.pm25_model.train_model import train_model
+from src.model_building.forecaster.pm25_model.t_model.runtime_features import build_more_features
+from src.model_building.forecaster.pm25_model.t_model.split_data import split_data
+from src.model_building.forecaster.pm25_model.t_model.train_model import train_model
 
 
 
-ROOT_DIR = Path(__file__).resolve().parents[3]
-logger = get_logger("pm25_model")
+ROOT_DIR = Path(__file__).resolve().parents[5]
+logger = get_logger("pm25_forecaster_t")
 
 
 def load_data(logger):

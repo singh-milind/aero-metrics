@@ -42,14 +42,14 @@ def make_metrics_dict(
     return metrics
 
 
-def dump_metrics_json(metrics, model_name):
+def dump_metrics_json(metrics, model_type,model_name):
 
-    root_dir = Path(__file__).resolve().parents[4]
+    root_dir = Path(__file__).resolve().parents[1]
 
     metrics_path = (
         root_dir
         / "metrics"
-        / "predictor"
+        / f"{model_type}"
         / f"{model_name}_metrics.json"
     )
 
