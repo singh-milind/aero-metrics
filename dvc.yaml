@@ -80,7 +80,7 @@ stages:
     metrics:
       - metrics/forecaster/pm25_model/pm25_metrics_t.json
   forecaster_train_pm25_model_t12:
-    cmd: python -m src.model_building.forecaster.pm25_model.t12_model.pm25_forecaster_t
+    cmd: python -m src.model_building.forecaster.pm25_model.t12_model.pm25_forecaster
     deps:
       - params.yaml
       - src/model_building/forecaster/pm25_model/t12_model/train_model.py

@@ -1,14 +1,13 @@
-from sklearn.model_selection import train_test_split
-
 def split_data(X, y, logger):
-    logger.info("Splitting data into train and test sets...")
+    logger.info("Splitting data chronologically...")
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
-        random_state=42,
-    )
+    split_index = int(len(X) * 0.8)
+
+    X_train = X.iloc[:split_index].copy()
+    X_test = X.iloc[split_index:].copy()
+
+    y_train = y.iloc[:split_index].copy()
+    y_test = y.iloc[split_index:].copy()
 
     logger.info("Data split completed successfully.")
 

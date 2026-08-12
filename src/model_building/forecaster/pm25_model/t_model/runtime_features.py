@@ -4,27 +4,82 @@ def build_more_features(df, logger):
     try:
         logger.info("Starting feature engineering...")
 
-        df = df.sort_values(["city", "time"]).copy()
+        df = df.sort_values(["time", "city"]).copy()
 
-        X = df.drop(columns=["pm2_5", "pm10", "time"]).copy()
+        X = df.drop(
+            columns=["pm2_5", "pm10", "time"]
+        ).copy()
+
         Y = df["pm2_5"].copy()
 
         logger.info("Adding Lag Features...")
 
         for hours in [12, 24, 48]:
-            periods = hours//6
+            periods = hours // 6
             X[f"pm2_5_lag_{hours}h"] = (
                 df.groupby("city")["pm2_5"]
-                  .shift(periods)
+                .shift(periods)
             )
 
-        lag_cols = [
+        logger.info("Adding Rolling Mean Features...")
+
+        past_pm25 = (
+            df.groupby("city")["pm2_5"]
+            .shift(1)
+        )
+
+        X["pm2_5_rolling_mean_24h"] = (
+            past_pm25.groupby(df["city"])
+                    .rolling(window=4)
+                    .mean()
+                    .reset_index(level=0, drop=True)
+        )
+
+        X["pm2_5_rolling_mean_48h"] = (
+            past_pm25.groupby(df["city"])
+                    .rolling(window=8)
+                    .mean()
+                    .reset_index(level=0, drop=True)
+        )
+        
+        X["pm2_5_change_12h"] = (
+            X["pm2_5_lag_12h"] -
+            X["pm2_5_lag_24h"]
+        )
+
+        X["pm2_5_change_24h"] = (
+            X["pm2_5_lag_24h"] -
+            X["pm2_5_lag_48h"]
+        )
+
+        weather_cols = [
+            "temperature_2m",
+            "relative_humidity_2m",
+            "wind_speed_10m",
+            "surface_pressure",
+            "precipitation"
+            ]
+
+        for col in weather_cols:
+            X[f"{col}_change_6h"] = (
+                df.groupby("city")[col].diff(1)
+            )
+        temporal_cols = [
             "pm2_5_lag_12h",
             "pm2_5_lag_24h",
-            "pm2_5_lag_48h"
+            "pm2_5_lag_48h",
+            "pm2_5_rolling_mean_24h",
+            "pm2_5_rolling_mean_48h",
+            "pm2_5_change_12h",
+            "pm2_5_change_24h",
+            "temperature_2m_change_6h",
+            "relative_humidity_2m_change_6h",
+            "wind_speed_10m_change_6h",
+            "surface_pressure_change_6h",
+            "precipitation_change_6h"
         ]
 
-        valid = X[lag_cols].notna().all(axis=1)
+        valid = X[temporal_cols].notna().all(axis=1) & Y.notna()
 
         X = X.loc[valid].copy()
         Y = Y.loc[valid].copy()
