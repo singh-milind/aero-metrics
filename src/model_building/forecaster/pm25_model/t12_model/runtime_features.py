@@ -10,7 +10,8 @@ def build_more_features(df, logger):
             columns=["pm2_5", "pm10", "time"]
         ).copy()
 
-        Y = df["pm2_5"].copy()
+        Y = df.groupby("city")["pm2_5"].shift(-2).copy()
+        
 
         logger.info("Adding Lag Features...")
 
@@ -111,6 +112,7 @@ def build_more_features(df, logger):
         Y = Y.loc[valid].copy()
         
 
+        logger.info("Creating interaction features...")
         X["stagnation_index"] = (
         X["relative_humidity_2m"]
         / (X["wind_speed_10m"] + 1)
@@ -125,9 +127,6 @@ def build_more_features(df, logger):
             X["precipitation"] == 0
         ).astype(int)
         
-        
-        logger.info("Creating interaction features...")
-
         X["season_region"] = (
             X["regional_season"].astype(str)
             + "_"

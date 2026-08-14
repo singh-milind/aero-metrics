@@ -44,13 +44,13 @@ pm25_forecaster_t:
 pm25_forecaster_t12:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 800   
-    max_depth: 7             
-    learning_rate: 0.03   # Slower, more stable learning
-    subsample: 0.85            
-    colsample_bytree: 0.85   
-    min_child_weight: 10   # Increased to prevent highly specific splits
+    n_estimators: 900  
+    max_depth: 4             
+    learning_rate: 0.03  # Slower, more stable learning
+    subsample: 0.7           
+    colsample_bytree: 0.7  
+    min_child_weight: 8   # Increased to prevent highly specific splits
     reg_alpha: 0.5            # L1 Regularization (Lasso)
-    reg_lambda: 20.0           # L2 Regularization (Ridge)
-    objective: reg:squarederror
+    reg_lambda: 3.0           # L2 Regularization (Ridge)
+    objective: "regression"
     random_state: 42

@@ -76,7 +76,7 @@ stages:
       - src/model_building/forecaster/pm25_model/t_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_forecaster.pkl
+      - models/pm25_forecaster_t.pkl
     metrics:
       - metrics/forecaster/pm25_model/pm25_metrics_t.json
   forecaster_train_pm25_model_t12:
