@@ -9,7 +9,7 @@ def build_more_features(df, logger):
         X = df.drop(
             columns=["pm2_5", "pm10", "time"]
         ).copy()
-
+        
         Y = df.groupby("city")["pm2_5"].shift(-2).copy()
         
 

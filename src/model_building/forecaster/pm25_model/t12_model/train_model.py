@@ -43,7 +43,6 @@ def train_model(x_train, y_train, logger):
         reg_alpha=hp["reg_alpha"],
         reg_lambda=hp["reg_lambda"],
         enable_categorical=True,
-        verbosity =-1,
         n_jobs=-1
     )
 
@@ -257,13 +256,9 @@ def train_model(x_train, y_train, logger):
             "cv_results.csv"
         )
 
-        mlflow.sklearn.log_model(
+        mlflow.xgboost.log_model(
             model,
             "model",
-            skops_trusted_types=[
-                "lightgbm.basic.Booster",
-                "lightgbm.sklearn.LGBMRegressor"
-            ]
         )
 
     logger.info("=" * 65)

@@ -34,7 +34,6 @@ def main():
     X,Y= build_more_features(df,logger)
     X_train, X_test, y_train, y_test = split_data(X, Y, logger)
     model = train_model(X_train, y_train,logger)
-
 if __name__ == "__main__":
     main()
     
