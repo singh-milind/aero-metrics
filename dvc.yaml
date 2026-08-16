@@ -105,6 +105,19 @@ stages:
       - models/pm25_forecaster_t24.pkl
     metrics:
       - metrics/forecaster/pm25_model/t24_model_metrics.json
+  forecaster_train_pm25_model_t48:
+    cmd: python -m src.model_building.forecaster.pm25_model.t48_model.pm25_forecaster
+    deps:
+      - params.yaml
+      - src/model_building/forecaster/pm25_model/t48_model/train_model.py
+      - src/model_building/forecaster/pm25_model/t48_model/pm25_forecaster.py
+      - src/model_building/forecaster/pm25_model/t48_model/split_data.py
+      - src/model_building/forecaster/pm25_model/t48_model/runtime_features.py
+      - data/processed/engineered_features.csv
+    outs:
+      - models/pm25_forecaster_t48.pkl
+    metrics:
+      - metrics/forecaster/pm25_model/t48_model_metrics.json
   forecaster_train_pm10_model:
     cmd: python -m src.model_building.forecaster.pm10_model.pm10_forecaster
     deps:
