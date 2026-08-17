@@ -8,6 +8,7 @@ stages:
     outs:
       - data/raw/aqi_data.csv
 
+
   fetch_weather_data:
     cmd: python -m src.data_gathering.weather_data
     deps:
@@ -17,6 +18,7 @@ stages:
     outs:
       - data/raw/weather_data.csv
 
+
   preprocess_data:
     cmd: python -m src.data_preprocessing.preprocessing
     deps:
@@ -25,6 +27,7 @@ stages:
       - data/raw/weather_data.csv
     outs:
       - data/interim/merged_data.csv
+
 
   feature_engineering:
     cmd: python -m src.feature_engineering.build_features
@@ -38,6 +41,8 @@ stages:
       - data/interim/merged_data.csv
     outs:
       - data/processed/engineered_features.csv
+
+
   predictor_train_pm25_model:
     cmd: python -m src.model_building.predictor.pm25_model.pm25_predictor
     deps:
@@ -52,10 +57,13 @@ stages:
       - src/model_building/predictor/pm25_model/pm25_predictor.pkl
     metrics:
       - metrics/predictor/pm25_metrics.json
+
+  
   predictor_train_pm10_model:
     cmd: python -m src.model_building.predictor.pm10_model.pm10_predictor
     deps:
       - params.yaml
+      - src/model_building/predictor/pm25_model/pm25_predictor.pkl
       - src/model_building/predictor/common/metrics.py
       - src/model_building/predictor/pm10_model/train_model.py
       - src/model_building/predictor/pm10_model/pm10_predictor.py
@@ -66,6 +74,8 @@ stages:
       - src/model_building/predictor/pm10_model/pm10_predictor.pkl
     metrics:
       - metrics/predictor/pm10_metrics.json
+
+
   forecaster_train_pm25_model_t:
     cmd: python -m src.model_building.forecaster.pm25_model.t_model.pm25_forecaster
     deps:
@@ -76,9 +86,11 @@ stages:
       - src/model_building/forecaster/pm25_model/t_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_forecaster_t.pkl
+      - model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl
     metrics:
       - metrics/forecaster/pm25_model/t_model_metrics.json
+
+
   forecaster_train_pm25_model_t12:
     cmd: python -m src.model_building.forecaster.pm25_model.t12_model.pm25_forecaster
     deps:
@@ -89,9 +101,11 @@ stages:
       - src/model_building/forecaster/pm25_model/t12_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_forecaster_t12.pkl
+      - model_building/forecaster/pm25_model/t12_model/pm25_forecaster_t12.pkl
     metrics:
       - metrics/forecaster/pm25_model/t12_model_metrics.json
+
+
   forecaster_train_pm25_model_t24:
     cmd: python -m src.model_building.forecaster.pm25_model.t24_model.pm25_forecaster
     deps:
@@ -102,9 +116,11 @@ stages:
       - src/model_building/forecaster/pm25_model/t24_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_forecaster_t24.pkl
+      - model_building/forecaster/pm25_model/t24_model/pm25_forecaster_t24.pkl
     metrics:
       - metrics/forecaster/pm25_model/t24_model_metrics.json
+
+
   forecaster_train_pm25_model_t48:
     cmd: python -m src.model_building.forecaster.pm25_model.t48_model.pm25_forecaster
     deps:
@@ -115,18 +131,23 @@ stages:
       - src/model_building/forecaster/pm25_model/t48_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm25_forecaster_t48.pkl
+      - model_building/forecaster/pm25_model/t48_model/pm25_forecaster_t48.pkl
     metrics:
       - metrics/forecaster/pm25_model/t48_model_metrics.json
-  forecaster_train_pm10_model:
-    cmd: python -m src.model_building.forecaster.pm10_model.pm10_forecaster
+
+      
+  forecaster_train_pm10_model_t:
+    cmd: python -m src.model_building.forecaster.pm10_model.t_model.pm10_forecaster
     deps:
       - params.yaml
-      - src/model_building/forecaster/pm10_model/train_model.py
-      - src/model_building/forecaster/pm10_model/pm10_forecaster.py
-      - src/model_building/forecaster/pm10_model/split_data.py
-      - src/model_building/forecaster/pm10_model/runtime_features.py
+      - model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl
+      - src/model_building/forecaster/pm10_model/t_model/train_model.py
+      - src/model_building/forecaster/pm10_model/t_model/pm10_forecaster.py
+      - src/model_building/forecaster/pm10_model/t_model/split_data.py
+      - src/model_building/forecaster/pm10_model/t_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/pm10_forecaster.pkl
+      - model_building/forecaster/pm10_model/t_model/pm10_forecaster_t.pkl
+    metrics:
+      - metrics/forecaster/pm10_model/t_model_metrics.json
     
