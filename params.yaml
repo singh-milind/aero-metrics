@@ -93,3 +93,16 @@ pm10_forecaster_t:
     reg_lambda: 10.0          # L2 Regularization (Ridge)
     objective: reg:squarederror
     random_state: 42  # Enable categorical feature support
+pm10_forecaster_t12:
+  model-type: "XGBoost Regressor"
+  hyperparameters:
+    n_estimators: 900     
+    max_depth: 3              
+    learning_rate: 0.01    # Slower, more stable learning
+    subsample: 0.7            
+    colsample_bytree: 0.7    
+    min_child_weight: 8   # Increased to prevent highly specific splits
+    reg_alpha: 0.5            # L1 Regularization (Lasso)
+    reg_lambda: 20.0          # L2 Regularization (Ridge)
+    objective: reg:squarederror
+    random_state: 42  # Enable categorical feature support
