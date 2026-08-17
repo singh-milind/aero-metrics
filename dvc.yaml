@@ -135,12 +135,11 @@ stages:
     metrics:
       - metrics/forecaster/pm25_model/t48_model_metrics.json
 
-      
+
   forecaster_train_pm10_model_t:
     cmd: python -m src.model_building.forecaster.pm10_model.t_model.pm10_forecaster
     deps:
       - params.yaml
-      - model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl
       - src/model_building/forecaster/pm10_model/t_model/train_model.py
       - src/model_building/forecaster/pm10_model/t_model/pm10_forecaster.py
       - src/model_building/forecaster/pm10_model/t_model/split_data.py
