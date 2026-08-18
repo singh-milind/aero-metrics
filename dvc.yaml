@@ -47,6 +47,7 @@ stages:
     cmd: python -m src.model_building.predictor.pm25_model.pm25_predictor
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/predictor/common/metrics.py
       - src/model_building/predictor/pm25_model/train_model.py
       - src/model_building/predictor/pm25_model/pm25_predictor.py
@@ -63,6 +64,7 @@ stages:
     cmd: python -m src.model_building.predictor.pm10_model.pm10_predictor
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/predictor/pm25_model/pm25_predictor.pkl
       - src/model_building/predictor/common/metrics.py
       - src/model_building/predictor/pm10_model/train_model.py
@@ -80,6 +82,7 @@ stages:
     cmd: python -m src.model_building.forecaster.pm25_model.t_model.pm25_forecaster
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/forecaster/pm25_model/t_model/train_model.py
       - src/model_building/forecaster/pm25_model/t_model/pm25_forecaster.py
       - src/model_building/forecaster/pm25_model/t_model/split_data.py
@@ -95,6 +98,7 @@ stages:
     cmd: python -m src.model_building.forecaster.pm25_model.t12_model.pm25_forecaster
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/forecaster/pm25_model/t12_model/train_model.py
       - src/model_building/forecaster/pm25_model/t12_model/pm25_forecaster.py
       - src/model_building/forecaster/pm25_model/t12_model/split_data.py
@@ -110,6 +114,7 @@ stages:
     cmd: python -m src.model_building.forecaster.pm25_model.t24_model.pm25_forecaster
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/forecaster/pm25_model/t24_model/train_model.py
       - src/model_building/forecaster/pm25_model/t24_model/pm25_forecaster.py
       - src/model_building/forecaster/pm25_model/t24_model/split_data.py
@@ -125,6 +130,7 @@ stages:
     cmd: python -m src.model_building.forecaster.pm25_model.t48_model.pm25_forecaster
     deps:
       - params.yaml
+      - metrics/metrics.py
       - src/model_building/forecaster/pm25_model/t48_model/train_model.py
       - src/model_building/forecaster/pm25_model/t48_model/pm25_forecaster.py
       - src/model_building/forecaster/pm25_model/t48_model/split_data.py
@@ -139,7 +145,8 @@ stages:
   forecaster_train_pm10_model_t:
     cmd: python -m src.model_building.forecaster.pm10_model.t_model.pm10_forecaster
     deps:
-      - params.yaml 
+      - params.yaml
+      - metrics/metrics.py 
       - src/model_building/forecaster/pm10_model/t_model/train_model.py
       - src/model_building/forecaster/pm10_model/t_model/pm10_forecaster.py
       - src/model_building/forecaster/pm10_model/t_model/split_data.py
@@ -153,7 +160,8 @@ stages:
   forecaster_train_pm10_model_t12:
     cmd: python -m src.model_building.forecaster.pm10_model.t12_model.pm10_forecaster
     deps:
-      - params.yaml 
+      - params.yaml
+      - metrics/metrics.py 
       - src/model_building/forecaster/pm10_model/t12_model/train_model.py
       - src/model_building/forecaster/pm10_model/t12_model/pm10_forecaster.py
       - src/model_building/forecaster/pm10_model/t12_model/split_data.py
