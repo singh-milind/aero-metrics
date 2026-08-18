@@ -56,7 +56,7 @@ stages:
     outs:
       - src/model_building/predictor/pm25_model/pm25_predictor.pkl
     metrics:
-      - metrics/predictor/pm25_metrics.json
+      - metrics/predictor/pm25/predictor_model_metrics.json
 
   
   predictor_train_pm10_model:
@@ -73,7 +73,7 @@ stages:
     outs:
       - src/model_building/predictor/pm10_model/pm10_predictor.pkl
     metrics:
-      - metrics/predictor/pm10_metrics.json
+      - metrics/predictor/pm10/predictor_model_metrics.json
 
 
   forecaster_train_pm25_model_t:
