@@ -17,7 +17,7 @@ def train_model(x_train, y_train, logger):
     with open("params.yaml", "r") as f:
         params = yaml.safe_load(f)
 
-    hp = params["pm10_forecaster_t12"]["hyperparameters"]
+    hp = params["pm10_forecaster_t24"]["hyperparameters"]
 
     dagshub.init(
         repo_owner="singh-milind",
@@ -29,27 +29,30 @@ def train_model(x_train, y_train, logger):
         "https://dagshub.com/singh-milind/aero-metrics.mlflow"
     )
 
-    mlflow.set_experiment("pm10_forecaster_t12")
+    mlflow.set_experiment("pm10_forecaster_t24")
 
     weights = np.select(
         [
+            y_train < 25,
             y_train < 50,
+            y_train < 75,
             y_train < 100,
             y_train < 150,
-            y_train < 300,
-            y_train < 400,
+            y_train < 250,
             y_train < 500,
-            y_train >= 600
+            y_train >= 500
         ],
         [
             1.0,
-            2.0,
-            4.0,
-            8.0,
-            12.0,
-            15.0,
-            20.0
-        ]
+            1.1,
+            1.25,
+            1.4,
+            1.6,
+            1.8,
+            2.2,
+            2.5
+        ],
+        default=1.0
     )
     
     model = XGBRegressor(
@@ -69,7 +72,7 @@ def train_model(x_train, y_train, logger):
 
     cv = TimeSeriesSplit(
         n_splits=5,
-        gap=2,
+        gap=4
     )
 
     scores = cross_validate(
@@ -155,11 +158,11 @@ def train_model(x_train, y_train, logger):
         metrics,
         model_type="forecaster",
         model_sub_type="pm10_model",
-        model_name="t12_model"
+        model_name="t24_model"
     )
 
     logger.info(
-        "Metrics saved to metrics/forecaster/pm10_model/t12_model_metrics.json"
+        "Metrics saved to metrics/forecaster/pm10_model/t24_model_metrics.json"
     )
 
     with mlflow.start_run():
