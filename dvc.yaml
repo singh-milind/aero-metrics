@@ -154,7 +154,8 @@ stages:
       - model_building/forecaster/pm10_model/t_model/pm10_forecaster_t.pkl
     metrics:
       - metrics/forecaster/pm10_model/t_model_metrics.json
-    
+
+
   forecaster_train_pm10_model_t12:
     cmd: python -m src.model_building.forecaster.pm10_model.t12_model.pm10_forecaster
     deps:
@@ -169,6 +170,8 @@ stages:
       - model_building/forecaster/pm10_model/t12_model/pm10_forecaster_t12.pkl
     metrics:
       - metrics/forecaster/pm10_model/t12_model_metrics.json
+
+
   forecaster_train_pm10_model_t24:
     cmd: python -m src.model_building.forecaster.pm10_model.t24_model.pm10_forecaster
     deps:
@@ -183,3 +186,18 @@ stages:
       - model_building/forecaster/pm10_model/t24_model/pm10_forecaster_t24.pkl
     metrics:
       - metrics/forecaster/pm10_model/t24_model_metrics.json
+
+  forecaster_train_pm10_model_t48:
+    cmd: python -m src.model_building.forecaster.pm10_model.t48_model.pm10_forecaster
+    deps:
+      - params.yaml
+      - metrics/metrics.py 
+      - src/model_building/forecaster/pm10_model/t48_model/train_model.py
+      - src/model_building/forecaster/pm10_model/t48_model/pm10_forecaster.py
+      - src/model_building/forecaster/pm10_model/t48_model/split_data.py
+      - src/model_building/forecaster/pm10_model/t48_model/runtime_features.py
+      - data/processed/engineered_features.csv
+    outs:
+      - model_building/forecaster/pm10_model/t48_model/pm10_forecaster_t48.pkl
+    metrics:
+      - metrics/forecaster/pm10_model/t48_model_metrics.json
