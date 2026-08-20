@@ -64,7 +64,6 @@ stages:
     deps:
       - params.yaml
       - metrics/metrics.py
-      - src/model_building/predictor/pm25_model/pm25_predictor.pkl
       - src/model_building/predictor/pm10_model/train_model.py
       - src/model_building/predictor/pm10_model/pm10_predictor.py
       - src/model_building/predictor/pm10_model/split_data.py
