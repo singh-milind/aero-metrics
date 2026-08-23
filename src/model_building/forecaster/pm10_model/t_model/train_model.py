@@ -29,27 +29,25 @@ def train_model(x_train, y_train, logger):
         "https://dagshub.com/singh-milind/aero-metrics.mlflow"
     )
 
-    mlflow.set_experiment("pm10_forecaster_t")
+    mlflow.set_experiment("pm10_forecaster_t_ratio")
+
+   
+    q90 = y_train.quantile(0.90)
+    q95 = y_train.quantile(0.95)
+    q97 = y_train.quantile(0.97)
 
     weights = np.select(
         [
-            y_train < 50,
-            y_train < 100,
-            y_train < 150,
-            y_train < 300,
-            y_train < 400,
-            y_train < 500,
-            y_train >= 600
+            y_train >= q97,
+            y_train >= q95,
+            y_train >= q90,
         ],
         [
-            1.0,
-            2.0,
-            4.0,
-            8.0,
-            12.0,
-            15.0,
-            20.0
-        ]
+            1.75,
+            1.50,
+            1.25,
+        ],
+        default=1.00
     )
     
     model = XGBRegressor(

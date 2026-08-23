@@ -4,15 +4,15 @@ def build_more_features(df, logger):
     try:
         logger.info("Starting feature engineering...")
 
-        df = df.sort_values(["time", "city"]).copy()
+        df = df.sort_values(["city", "time"]).copy()
 
         X = df.drop(
             columns=["pm2_5", "pm10", "time"]
         ).copy()
         
+        df["pm_ratio"] = df["pm10"] / df["pm2_5"]
         
-        
-        Y = df.groupby("city")["pm10"].transform(
+        Y = df.groupby("city")["pm_ratio"].transform(
                 lambda x: x.clip(
                     upper=x.quantile(0.75) + 1.5 * (x.quantile(0.75) - x.quantile(0.25))
                 )
@@ -24,53 +24,53 @@ def build_more_features(df, logger):
 
         for hours in [12, 24, 48]:
             periods = hours // 6
-            X[f"pm10_lag_{hours}h"] = (
-                df.groupby("city")["pm10"]
+            X[f"pm_ratio_lag_{hours}h"] = (
+                df.groupby("city")["pm_ratio"]
                 .shift(periods)
             )
 
         logger.info("Adding Rolling Mean Features...")
 
-        past_pm10 = (
-            df.groupby("city")["pm10"]
+        past_pm_ratio = (
+            df.groupby("city")["pm_ratio"]
             .shift(1)
         )
 
-        X["pm10_rolling_mean_24h"] = (
-            past_pm10.groupby(df["city"])
+        X["pm_ratio_rolling_mean_24h"] = (
+            past_pm_ratio.groupby(df["city"])
                     .rolling(window=4)
                     .mean()
                     .reset_index(level=0, drop=True)
         )
 
-        X["pm10_rolling_mean_48h"] = (
-            past_pm10.groupby(df["city"])
+        X["pm_ratio_rolling_mean_48h"] = (
+            past_pm_ratio.groupby(df["city"])
                     .rolling(window=8)
                     .mean()
                     .reset_index(level=0, drop=True)
         )
         
-        X["pm10_change_12h"] = (
-            X["pm10_lag_12h"] -
-            X["pm10_lag_24h"]
+        X["pm_ratio_change_12h"] = (
+            X["pm_ratio_lag_12h"] -
+            X["pm_ratio_lag_24h"]
         )
 
-        X["pm10_change_24h"] = (
-            X["pm10_lag_24h"] -
-            X["pm10_lag_48h"]
+        X["pm_ratio_change_24h"] = (
+            X["pm_ratio_lag_24h"] -
+            X["pm_ratio_lag_48h"]
         )
-        X["pm10_acceleration"] = (
-        X["pm10_lag_12h"]
-        - 2 * X["pm10_lag_24h"]
-        + X["pm10_lag_48h"]
+        X["pm_ratio_acceleration"] = (
+        X["pm_ratio_lag_12h"]
+        - 2 * X["pm_ratio_lag_24h"]
+        + X["pm_ratio_lag_48h"]
     )
 
-        X["pm10_recent_max"] = X[
-            ["pm10_lag_12h", "pm10_lag_24h", "pm10_lag_48h"]
+        X["pm_ratio_recent_max"] = X[
+            ["pm_ratio_lag_12h", "pm_ratio_lag_24h", "pm_ratio_lag_48h"]
         ].max(axis=1)
 
-        X["pm10_recent_mean"] = X[
-            ["pm10_lag_12h", "pm10_lag_24h", "pm10_lag_48h"]
+        X["pm_ratio_recent_mean"] = X[
+            ["pm_ratio_lag_12h", "pm_ratio_lag_24h", "pm_ratio_lag_48h"]
         ].mean(axis=1)
         weather_cols = [
             "temperature_2m",
@@ -100,16 +100,16 @@ def build_more_features(df, logger):
                 df.groupby("city")[col].diff(8)
             )
         temporal_cols = [
-            "pm10_lag_12h",
-            "pm10_lag_24h",
-            "pm10_lag_48h",
-            "pm10_rolling_mean_24h",
-            "pm10_rolling_mean_48h",
-            "pm10_change_12h",
-            "pm10_change_24h",
-            "pm10_acceleration",
-            "pm10_recent_max",
-            "pm10_recent_mean",
+            "pm_ratio_lag_12h",
+            "pm_ratio_lag_24h",
+            "pm_ratio_lag_48h",
+            "pm_ratio_rolling_mean_24h",
+            "pm_ratio_rolling_mean_48h",
+            "pm_ratio_change_12h",
+            "pm_ratio_change_24h",
+            "pm_ratio_acceleration",
+            "pm_ratio_recent_max",
+            "pm_ratio_recent_mean",
             
             "temperature_2m_change_6h",
             "relative_humidity_2m_change_6h",
