@@ -3,6 +3,7 @@ import dagshub
 import mlflow
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 from sklearn.model_selection import TimeSeriesSplit, cross_validate
 from xgboost import XGBRegressor
@@ -44,6 +45,7 @@ def train_model(x_train, y_train, logger):
         enable_categorical=True,
         n_jobs=-1
     )
+    
 
     cv = TimeSeriesSplit(
         n_splits=5
@@ -64,7 +66,6 @@ def train_model(x_train, y_train, logger):
     )
 
     model.fit(x_train, y_train)
-
     train_scores = scores["train_r2"]
     cv_scores = scores["test_r2"]
 

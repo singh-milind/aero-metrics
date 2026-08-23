@@ -1,0 +1,22 @@
+schema: '2.0'
+stages:
+  fetch_aqi_data:
+    cmd: python -m src.data_gathering.aqi_data
+    deps:
+    - path: params.yaml
+      hash: md5
+      md5: c1fbd92fb659e59c1b15547498dd8765
+      size: 5307
+    - path: src/city_info.py
+      hash: md5
+      md5: 5f20dfe7cc53e2793fabdb57d2efd2c9
+      size: 3500
+    - path: src/data_gathering/aqi_data.py
+      hash: md5
+      md5: f7b081353fb3bf56c477093d7b09decd
+      size: 3020
+    outs:
+    - path: data/raw/aqi_data.csv
+      hash: md5
+      md5: 9ee598cdd50474fa0f607a3c6389ca5a
+      size: 12417733

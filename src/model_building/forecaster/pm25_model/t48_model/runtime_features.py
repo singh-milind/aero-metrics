@@ -4,13 +4,19 @@ def build_more_features(df, logger):
     try:
         logger.info("Starting feature engineering...")
 
-        df = df.sort_values(["time", "city"]).copy()
+        df = df.sort_values(["city", "time"]).copy()
 
         X = df.drop(
             columns=["pm2_5", "pm10", "time"]
         ).copy()
         
-        Y = df.groupby("city")["pm2_5"].shift(-8).copy()
+        Y = df.groupby("city")["pm2_5"].transform(
+                lambda x: x.clip(
+                    upper=x.quantile(0.75) + 1.5 * (x.quantile(0.75) - x.quantile(0.25))
+                )
+            )
+        Y = Y.groupby(df["city"]).shift(-8)
+
         
 
         logger.info("Adding Lag Features...")

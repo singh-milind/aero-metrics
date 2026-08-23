@@ -104,8 +104,8 @@ for i, (city, info) in enumerate(city_info.items(), start=1):
     except Exception:
         logger.exception(f"Failed to process {city}")
 
-    logger.info("Sleeping 5 seconds before next request...")
-    time.sleep(5)
+    logger.info("Sleeping 2 seconds before next request...")
+    time.sleep(2)
 
 if all_cities_data:
     india_weather_df = pd.concat(all_cities_data, ignore_index=True)

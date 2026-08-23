@@ -1,6 +1,6 @@
 data-gathering:
-  start-date: 2023-06-30
-  end-date: 2026-06-30
+  start-date: '2023-06-30'
+  end-date: '2026-06-30'
 pm25_predictor:
   model-type: "XGBoost Regressor"
   hyperparameters:
@@ -31,7 +31,7 @@ pm10_predictor:
 pm25_forecaster_t:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 700     
+    n_estimators: 700    
     max_depth: 3           
     learning_rate: 0.01    # Slower, more stable learning
     subsample: 0.65            
@@ -44,11 +44,11 @@ pm25_forecaster_t:
 pm25_forecaster_t12:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 900  
+    n_estimators: 300  
     max_depth: 3             
     learning_rate: 0.01 # Slower, more stable learning
-    subsample: 0.7           
-    colsample_bytree: 0.7  
+    subsample: 0.65           
+    colsample_bytree: 0.65  
     min_child_weight: 8   # Increased to prevent highly specific splits
     reg_alpha: 0.5            # L1 Regularization (Lasso)
     reg_lambda: 10.0           # L2 Regularization (Ridge)
@@ -57,12 +57,12 @@ pm25_forecaster_t12:
 pm25_forecaster_t24:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 900  
-    max_depth: 4           
+    n_estimators: 300  
+    max_depth: 4          
     learning_rate: 0.01 # Slower, more stable learning
-    subsample: 0.9           
-    colsample_bytree: 0.9  
-    min_child_weight: 10   # Increased to prevent highly specific splits
+    subsample: 0.5          
+    colsample_bytree: 0.5 
+    min_child_weight: 5   # Increased to prevent highly specific splits
     reg_alpha: 0.5            # L1 Regularization (Lasso)
     reg_lambda: 10.0           # L2 Regularization (Ridge)
     objective: "reg:squarederror"
@@ -70,14 +70,14 @@ pm25_forecaster_t24:
 pm25_forecaster_t48:
   model-type: "XGBoost Regressor"
   hyperparameters:
-    n_estimators: 900 
+    n_estimators: 250 
     max_depth: 3           
-    learning_rate: 0.01 # Slower, more stable learning
-    subsample: 0.9           
-    colsample_bytree: 0.9  
+    learning_rate: 0.008 # Slower, more stable learning
+    subsample: 0.5           
+    colsample_bytree: 0.5  
     min_child_weight: 10   # Increased to prevent highly specific splits
     reg_alpha: 0.5            # L1 Regularization (Lasso)
-    reg_lambda: 10.0           # L2 Regularization (Ridge)
+    reg_lambda: 5.0           # L2 Regularization (Ridge)
     objective: "reg:squarederror"
     random_state: 42
 pm10_forecaster_t:

@@ -49,14 +49,22 @@ def train_model(x_train, y_train, logger):
     model = base_model
 
     sample_weights = np.select(
-        [
-            y_train < 50,
-            y_train < 100,
-            y_train < 200,
-            y_train < 300,
-            y_train >= 300
+        [   
+            y_train >= 300,
+            y_train >= 200,
+            y_train >= 150,
+            y_train >= 105,
+            y_train >= 80,
+            y_train >= 50,
         ],
-        [1.0, 3.0, 10.0, 15.0, 20.0]
+        [   3.0,
+            2.5,
+            2.0,
+            1.8,
+            1.5,
+            1.2,
+        ],
+        default=1.0
     )
 
     cv = TimeSeriesSplit(

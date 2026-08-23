@@ -4,7 +4,7 @@ def build_more_features(df, logger):
     try:
         logger.info("Starting feature engineering...")
 
-        df = df.sort_values(["time", "city"]).copy()
+        df = df.sort_values(["city", "time"]).copy()
 
         X = df.drop(
             columns=["pm2_5", "pm10", "time"]

@@ -94,8 +94,8 @@ for i, (city, info) in enumerate(city_info.items(), start=1):
     except Exception:
         logger.exception(f"Failed processing {city}")
 
-    logger.info(f"Sleeping 5s before next city...")
-    time.sleep(5)
+    logger.info(f"Sleeping 2s before next city...")
+    time.sleep(2)
 
 if all_cities_data:
     india_aqi_df = pd.concat(all_cities_data, ignore_index=True)
