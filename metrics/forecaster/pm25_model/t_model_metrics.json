@@ -1,15 +1,15 @@
 {
-    "mean_train_r2": 0.8788,
-    "mean_cv_r2": 0.8267,
-    "mean_train_mae": 7.1307,
-    "mean_cv_mae": 9.7105,
-    "mean_train_rmse": 10.7662,
-    "mean_cv_rmse": 14.0008,
-    "std_train_r2": 0.0055,
-    "std_cv_r2": 0.0273,
-    "std_train_mae": 0.7394,
-    "std_cv_mae": 1.7405,
-    "std_train_rmse": 1.3418,
-    "std_cv_rmse": 3.1288,
-    "generalization_gap": 0.0522
+    "mean_train_r2": 0.8724,
+    "mean_cv_r2": 0.837,
+    "mean_train_mae": 7.6036,
+    "mean_cv_mae": 9.4819,
+    "mean_train_rmse": 12.0361,
+    "mean_cv_rmse": 14.6153,
+    "std_train_r2": 0.0069,
+    "std_cv_r2": 0.0231,
+    "std_train_mae": 0.7199,
+    "std_cv_mae": 1.7087,
+    "std_train_rmse": 1.4422,
+    "std_cv_rmse": 3.566,
+    "generalization_gap": 0.0353
 }

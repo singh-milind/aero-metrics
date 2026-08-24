@@ -55,6 +55,8 @@ stages:
       - data/processed/engineered_features.csv
     outs:
       - src/model_building/predictor/pm25_model/pm25_predictor.pkl
+      - src/model_building/predictor/pm25_model/pm25_explainer.pkl
+      - src/model_building/predictor/pm25_model/pm25_global_shap.pkl
     metrics:
       - metrics/predictor/pm25/predictor_model_metrics.json
 
@@ -71,6 +73,8 @@ stages:
       - data/processed/engineered_features.csv
     outs:
       - src/model_building/predictor/pm10_model/pm10_predictor.pkl
+      - src/model_building/predictor/pm10_model/pm10_explainer.pkl
+      - src/model_building/predictor/pm10_model/pm10_global_shap.pkl
     metrics:
       - metrics/predictor/pm10/predictor_model_metrics.json
 
@@ -86,7 +90,9 @@ stages:
       - src/model_building/forecaster/pm25_model/t_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl
+      - src/model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl
+      - src/model_building/forecaster/pm25_model/t_model/pm25_explainer.pkl
+      - src/model_building/forecaster/pm25_model/t_model/pm25_global_shap.pkl
     metrics:
       - metrics/forecaster/pm25_model/t_model_metrics.json
 
@@ -102,7 +108,9 @@ stages:
       - src/model_building/forecaster/pm25_model/t12_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm25_model/t12_model/pm25_forecaster_t12.pkl
+      - src/model_building/forecaster/pm25_model/t12_model/pm25_forecaster_t12.pkl
+      - src/model_building/forecaster/pm25_model/t12_model/pm25_explainer.pkl
+      - src/model_building/forecaster/pm25_model/t12_model/pm25_global_shap.pkl
     metrics:
       - metrics/forecaster/pm25_model/t12_model_metrics.json
 
@@ -118,7 +126,9 @@ stages:
       - src/model_building/forecaster/pm25_model/t24_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm25_model/t24_model/pm25_forecaster_t24.pkl
+      - src/model_building/forecaster/pm25_model/t24_model/pm25_forecaster_t24.pkl
+      - src/model_building/forecaster/pm25_model/t24_model/pm25_explainer.pkl
+      - src/model_building/forecaster/pm25_model/t24_model/pm25_global_shap.pkl
     metrics:
       - metrics/forecaster/pm25_model/t24_model_metrics.json
 
@@ -134,7 +144,9 @@ stages:
       - src/model_building/forecaster/pm25_model/t48_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm25_model/t48_model/pm25_forecaster_t48.pkl
+      - src/model_building/forecaster/pm25_model/t48_model/pm25_forecaster_t48.pkl
+      - src/model_building/forecaster/pm25_model/t48_model/pm25_explainer.pkl
+      - src/model_building/forecaster/pm25_model/t48_model/pm25_global_shap.pkl
     metrics:
       - metrics/forecaster/pm25_model/t48_model_metrics.json
 
@@ -150,7 +162,9 @@ stages:
       - src/model_building/forecaster/pm10_model/t_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm10_model/t_model/pm10_forecaster_t.pkl
+      - src/model_building/forecaster/pm10_model/t_model/pm10_forecaster_t.pkl
+      - src/model_building/forecaster/pm10_model/t_model/pm10_explainer.pkl
+      - src/model_building/forecaster/pm10_model/t_model/pm10_global_shap.pkl
     metrics:
       - metrics/forecaster/pm10_model/t_model_metrics.json
 
@@ -166,7 +180,9 @@ stages:
       - src/model_building/forecaster/pm10_model/t12_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm10_model/t12_model/pm10_forecaster_t12.pkl
+      - src/model_building/forecaster/pm10_model/t12_model/pm10_forecaster_t12.pkl
+      - src/model_building/forecaster/pm10_model/t12_model/pm10_explainer.pkl
+      - src/model_building/forecaster/pm10_model/t12_model/pm10_global_shap.pkl
     metrics:
       - metrics/forecaster/pm10_model/t12_model_metrics.json
 
@@ -182,7 +198,9 @@ stages:
       - src/model_building/forecaster/pm10_model/t24_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm10_model/t24_model/pm10_forecaster_t24.pkl
+      - src/model_building/forecaster/pm10_model/t24_model/pm10_forecaster_t24.pkl
+      - src/model_building/forecaster/pm10_model/t24_model/pm10_explainer.pkl
+      - src/model_building/forecaster/pm10_model/t24_model/pm10_global_shap.pkl
     metrics:
       - metrics/forecaster/pm10_model/t24_model_metrics.json
 
@@ -197,6 +215,8 @@ stages:
       - src/model_building/forecaster/pm10_model/t48_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - model_building/forecaster/pm10_model/t48_model/pm10_forecaster_t48.pkl
+      - src/model_building/forecaster/pm10_model/t48_model/pm10_forecaster_t48.pkl
+      - src/model_building/forecaster/pm10_model/t48_model/pm10_explainer.pkl
+      - src/model_building/forecaster/pm10_model/t48_model/pm10_global_shap.pkl
     metrics:
       - metrics/forecaster/pm10_model/t48_model_metrics.json

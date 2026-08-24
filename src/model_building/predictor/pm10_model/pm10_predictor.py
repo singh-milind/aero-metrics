@@ -3,6 +3,8 @@ import joblib
 
 import pandas as pd
 from pathlib import Path
+
+import shap
 from src.utils.logger import get_logger
 from src.model_building.predictor.pm10_model.runtime_features import build_more_features
 from src.model_building.predictor.pm10_model.split_data import split_data
@@ -32,10 +34,20 @@ def load_data(logger):
 
 def main():
     df = load_data(logger)
-    X,Y= build_more_features(df,logger)
+    X, Y = build_more_features(df, logger)
     X_train, X_test, y_train, y_test = split_data(X, Y, logger)
     model = train_model(X_train, y_train, logger)
-    joblib.dump(model, ROOT_DIR / "src" / "model_building" / "predictor" / "pm10_model" / "pm10_predictor.pkl")
+
+    explainer = shap.TreeExplainer(model)
+    global_shap_values = explainer(X_test)
+    global_shap_importance = dict(zip(X_test.columns, abs(global_shap_values.values).mean(axis=0)))
+
+    model_dir = ROOT_DIR / "src" / "model_building" / "predictor" / "pm10_model"
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(model, model_dir / "pm10_predictor.pkl")
+    joblib.dump(explainer, model_dir / "pm10_explainer.pkl")
+    joblib.dump(global_shap_importance, model_dir / "pm10_global_shap.pkl")
 
 if __name__ == "__main__":
     main()
