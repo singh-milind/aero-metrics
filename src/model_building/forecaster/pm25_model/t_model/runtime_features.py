@@ -56,7 +56,6 @@ def build_more_features(df, logger):
         - 2 * X["pm2_5_lag_24h"]
         + X["pm2_5_lag_48h"]
     )
-
         X["pm2_5_recent_max"] = X[
             ["pm2_5_lag_12h", "pm2_5_lag_24h", "pm2_5_lag_48h"]
         ].max(axis=1)

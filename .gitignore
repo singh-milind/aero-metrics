@@ -11,7 +11,7 @@ data/interim/
 __pycache__/
 *.py[cod]
 .venv/
-
+.env
 
 cv_results.csv
 feature_importance.png
