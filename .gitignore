@@ -3,9 +3,14 @@ logs/
 *.log
 
 # Data
-data/raw/
-data/processed/
-data/interim/
+data/raw/aqi_data.csv
+data/raw/weather_data.csv
+
+data/processed/engineered_features.csv
+data/processed/X_train.csv
+data/processed/test.ipynb
+
+data/interim/merged_data.csv
 
 # Python
 __pycache__/

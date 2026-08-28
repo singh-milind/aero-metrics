@@ -1,7 +1,7 @@
 
 
 from fastapi import APIRouter
-from src.api.schemas.predictor import PredictorInput, prepare_input
+from src.api.schemas.predictor.predictor import PredictorInput, prepare_input
 import joblib
 router = APIRouter()
 

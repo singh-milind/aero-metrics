@@ -4,7 +4,7 @@ import pandas as pd
 
 from src.utils.logger import get_logger
 from src.city_info import city_info
-from src.api.schemas.predictor_features import compute_features
+from src.api.schemas.predictor.predictor_features import compute_features
 
 logger = get_logger('predictor_api')
 cities = set(list(city_info.keys()))
