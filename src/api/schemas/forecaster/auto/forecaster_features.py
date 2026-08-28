@@ -14,6 +14,7 @@ def compute_features(df, logger, target_time):
         df["day_of_week"] = df["time"].dt.dayofweek
         df["month"] = df["time"].dt.month
         df = add_weather_features(df)
+        df=df[df['time'] == target_time]
         df["region"] = df["city"].map(CITY_TO_REGION)
         if df["region"].isna().any():
             missing = df.loc[df["region"].isna(), "city"].unique()
@@ -79,7 +80,7 @@ def compute_features(df, logger, target_time):
         categorical_cols = ["city", "weather_verdict", "time_of_day", "season_region"]
         df[categorical_cols] = df[categorical_cols].astype("category")
         df["time"] = pd.to_datetime(df["time"])
-        return df[df['time'] == target_time]
+        return df
     except Exception:
         logger.exception("Error during feature computation.")
         raise

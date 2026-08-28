@@ -33,6 +33,7 @@ def read(city):
             f"No historical data found for city={city}, "
         )
 
-    df["time"] = pd.to_datetime(df["time"], utc=True)
+    df["time"] = pd.to_datetime(df["time"], utc=True).dt.tz_convert("Asia/Kolkata").dt.tz_localize(None)
+    df['time'] = df['time'] + pd.Timedelta(minutes=30)  # Adjusting time to the middle of the 6-hour interval
 
     return df

@@ -2,7 +2,7 @@ import pandas as pd
 
 def add_pm_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["time"] = pd.to_datetime(df["time"], utc=True)
+    df["time"] = pd.to_datetime(df["time"])
     df = df.sort_values("time").reset_index(drop=True)
 
     df["pm2_5_lag_12h"] = df["pm2_5"].shift(2)

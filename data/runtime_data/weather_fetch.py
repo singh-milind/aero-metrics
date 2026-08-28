@@ -1,16 +1,47 @@
-
 import time
 import requests
 import pandas as pd
+from zoneinfo import ZoneInfo
 from src.city_info import city_info
-from pathlib import Path
 from src.utils.logger import get_logger
-from src.database.ingest_weather_data import ingest
+from src.database.ingest_weather_data import ingest, clear_weather_data
 
+IST = ZoneInfo("Asia/Kolkata")
 logger = get_logger("runtime_data_fetch")
 
+AGGREGATION_LOGIC = {
+    "temperature_2m": "mean",
+    "relative_humidity_2m": "mean",
+    "wind_speed_10m": "mean",
+    "wind_direction_10m": "mean",
+    "precipitation": "sum",
+    "surface_pressure": "mean",
+}
+
+def process_weather_dataframe(df, city_name):
+    if df.empty:
+        return None
+
+    df["time"] = pd.to_datetime(df["time"])
+
+    if df["time"].dt.tz is None:
+        df["time"] = df["time"].dt.tz_localize(IST)
+    else:
+        df["time"] = df["time"].dt.tz_convert(IST)
+
+    df.set_index("time", inplace=True)
+
+    df = df.resample("6h").agg(AGGREGATION_LOGIC).reset_index()
+
+    df["time"] = df["time"].dt.tz_localize(None)
+
+    df.insert(1, "city", city_name)
+    df.dropna(inplace=True)
+
+    return df
+
 def fetch_historical_data(city_name, lat, lon, start_date, end_date):
-    logger.info(f"Fetching weather data for {city_name}...")
+    logger.info(f"Fetching historical weather for {city_name}...")
 
     url = "https://archive-api.open-meteo.com/v1/archive"
 
@@ -27,7 +58,7 @@ def fetch_historical_data(city_name, lat, lon, start_date, end_date):
             "precipitation",
             "surface_pressure",
         ],
-        "timezone": "auto",
+        "timezone": "Asia/Kolkata",
     }
 
     try:
@@ -35,55 +66,43 @@ def fetch_historical_data(city_name, lat, lon, start_date, end_date):
         response.raise_for_status()
 
         data = response.json()
+
+        if "hourly" not in data:
+            logger.warning(f"No historical data for {city_name}")
+            return None
+
         df = pd.DataFrame(data["hourly"])
 
-        df["time"] = pd.to_datetime(df["time"])
-        df.set_index("time", inplace=True)
+        if df.empty:
+            logger.warning(f"Empty historical data for {city_name}")
+            return None
 
-        aggregation_logic = {
-            "temperature_2m": "mean",
-            "relative_humidity_2m": "mean",
-            "wind_speed_10m": "mean",
-            "wind_direction_10m": "mean",
-            "precipitation": "sum",
-            "surface_pressure": "mean",
-        }
+        df = process_weather_dataframe(df, city_name)
 
-        df_4x_daily = (
-            df.resample("6h")
-            .agg(aggregation_logic)
-            .reset_index()
-        )
+        if df is None or df.empty:
+            logger.warning(f"No processed historical data for {city_name}")
+            return None
 
-        df_4x_daily.insert(1, "city", city_name)
-        df_4x_daily.dropna(inplace=True)
+        logger.info(f"{city_name}: {len(df)} historical rows")
 
-        logger.info(
-            f"Successfully extracted {len(df_4x_daily)} weather records for {city_name}"
-        )
-
-        return df_4x_daily
+        return df
 
     except requests.exceptions.Timeout:
         logger.error(f"Request timed out while fetching {city_name}")
-
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error for {city_name}: {e}")
-
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed for {city_name}: {e}")
-
     except Exception as e:
         logger.exception(f"Unexpected error while processing {city_name}: {e}")
 
     return None
 
-
 def get_historical_data(start_date, end_date):
     all_cities_data = []
 
     for i, (city, info) in enumerate(city_info.items(), start=1):
-        logger.info(f"[{i}/{len(city_info)}] Processing {city}")
+        logger.info(f"[{i}/{len(city_info)}] Processing historical data: {city}")
 
         try:
             df_city = fetch_historical_data(
@@ -103,19 +122,18 @@ def get_historical_data(start_date, end_date):
         logger.info("Sleeping 2 seconds before next request...")
         time.sleep(2)
 
-    if all_cities_data:
-        india_weather_df = pd.concat(all_cities_data, ignore_index=True)
-        logger.info(f"Final dataset shape: {india_weather_df.shape}")
-    else:
-        logger.error("No data fetched.")
-        india_weather_df = pd.DataFrame()
+    if not all_cities_data:
+        logger.error("No historical data fetched.")
+        return pd.DataFrame()
 
-    return india_weather_df
+    df = pd.concat(all_cities_data, ignore_index=True)
 
+    logger.info(f"Historical dataset shape: {df.shape}")
 
+    return df
 
 def fetch_forecast_data(city_name, lat, lon):
-    logger.info(f"Fetching weather data for {city_name}...")
+    logger.info(f"Fetching forecast weather for {city_name}...")
 
     url = "https://api.open-meteo.com/v1/forecast"
 
@@ -131,7 +149,7 @@ def fetch_forecast_data(city_name, lat, lon):
             "surface_pressure",
         ],
         "forecast_days": 7,
-        "timezone": "auto",
+        "timezone": "Asia/Kolkata",
     }
 
     try:
@@ -139,56 +157,43 @@ def fetch_forecast_data(city_name, lat, lon):
         response.raise_for_status()
 
         data = response.json()
+
+        if "hourly" not in data:
+            logger.warning(f"No forecast data for {city_name}")
+            return None
+
         df = pd.DataFrame(data["hourly"])
 
-        df["time"] = pd.to_datetime(df["time"])
-        df.set_index("time", inplace=True)
+        if df.empty:
+            logger.warning(f"Empty forecast data for {city_name}")
+            return None
 
-        aggregation_logic = {
-            "temperature_2m": "mean",
-            "relative_humidity_2m": "mean",
-            "wind_speed_10m": "mean",
-            "wind_direction_10m": "mean",
-            "precipitation": "sum",
-            "surface_pressure": "mean",
-        }
+        df = process_weather_dataframe(df, city_name)
 
-        df_4x_daily = (
-            df.resample("6h")
-            .agg(aggregation_logic)
-            .reset_index()
-        )
+        if df is None or df.empty:
+            logger.warning(f"No processed forecast data for {city_name}")
+            return None
 
-        df_4x_daily.insert(1, "city", city_name)
-        df_4x_daily.dropna(inplace=True)
+        logger.info(f"{city_name}: {len(df)} forecast rows")
 
-        logger.info(
-            f"Successfully extracted {len(df_4x_daily)} weather records for {city_name}"
-        )
-
-        return df_4x_daily
+        return df
 
     except requests.exceptions.Timeout:
         logger.error(f"Request timed out while fetching {city_name}")
-
     except requests.exceptions.HTTPError as e:
         logger.error(f"HTTP error for {city_name}: {e}")
-
     except requests.exceptions.RequestException as e:
         logger.error(f"Request failed for {city_name}: {e}")
-
     except Exception as e:
         logger.exception(f"Unexpected error while processing {city_name}: {e}")
 
     return None
 
-
-
 def get_forecast_data():
     all_cities_data = []
 
     for i, (city, info) in enumerate(city_info.items(), start=1):
-        logger.info(f"[{i}/{len(city_info)}] Processing {city}")
+        logger.info(f"[{i}/{len(city_info)}] Processing forecast data: {city}")
 
         try:
             df_city = fetch_forecast_data(
@@ -206,42 +211,55 @@ def get_forecast_data():
         logger.info("Sleeping 2 seconds before next request...")
         time.sleep(2)
 
-    if all_cities_data:
-        india_weather_df = pd.concat(all_cities_data, ignore_index=True)
-        logger.info(f"Final dataset shape: {india_weather_df.shape}")
-    else:
-        logger.error("No data fetched.")
-        india_weather_df = pd.DataFrame()
+    if not all_cities_data:
+        logger.error("No forecast data fetched.")
+        return pd.DataFrame()
 
-    return india_weather_df
+    df = pd.concat(all_cities_data, ignore_index=True)
+
+    logger.info(f"Forecast dataset shape: {df.shape}")
+
+    return df
 
 def main():
     start_time = time.time()
-    logger.info("Starting historical data fetch for all cities...")
 
-    historical_weather_df = get_historical_data(start_date="2026-08-25", end_date="2026-08-27")
+    logger.info("Starting weather data ingestion...")
+
+    now = pd.Timestamp.now(tz=IST)
+    end_date = now.strftime("%Y-%m-%d")
+    start_date = (now - pd.Timedelta(days=2)).strftime("%Y-%m-%d")
+
+    logger.info(f"Historical range: {start_date} -> {end_date}")
+
+    historical_weather_df = get_historical_data(
+        start_date=start_date,
+        end_date=end_date,
+    )
+
     forecast_weather_df = get_forecast_data()
+
+    if historical_weather_df.empty and forecast_weather_df.empty:
+        logger.error("No weather data fetched. Database will not be modified.")
+        return
+
+    clear_weather_data()
 
     if not historical_weather_df.empty:
         ingest(historical_weather_df, data_type="observed")
-        logger.info("Historical dataset saved to database successfully.")
+        logger.info("Historical weather data saved successfully.")
     else:
-        logger.error("No data to save to the database.")
+        logger.warning("Historical dataset is empty.")
 
     if not forecast_weather_df.empty:
         ingest(forecast_weather_df, data_type="forecast")
-        logger.info("Forecast dataset saved to database successfully.")
+        logger.info("Forecast weather data saved successfully.")
     else:
-        logger.error("No data to save to the database.")
+        logger.warning("Forecast dataset is empty.")
 
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    logger.info(f"Total execution time: {elapsed_time:.2f} seconds.")
-    
+    elapsed_time = time.time() - start_time
 
-    
-
-
+    logger.info(f"Weather ingestion completed in {elapsed_time:.2f} seconds.")
 
 if __name__ == "__main__":
     main()

@@ -12,77 +12,86 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+IST = ZoneInfo("Asia/Kolkata")
 
 logger = get_logger("forecaster_api")
 cities = set(city_info.keys())
 
 class ForecasterInput(BaseModel):
-    target_time: Annotated[datetime, Field(..., description="Forecast target datetime")]
-    city: Annotated[str, Field(..., description="City name")]
+    target_time: Annotated[datetime, Field(...)]
+    city: Annotated[str, Field(...)]
 
     @field_validator("city")
     @classmethod
     def validate_city(cls, value):
         value = value.strip().title()
         if value not in cities:
-            raise ValueError(f"City '{value}' is not in the list of valid cities.")
+            raise ValueError(
+                f"City '{value}' is not in the list of valid cities."
+            )
         return value
 
+    @model_validator(mode="after")
+    def validate_target_time(self):
+        now = datetime.now(IST)
 
-IST = ZoneInfo("Asia/Kolkata")
+        target_time = self.target_time
 
-@model_validator(mode="after")
-def validate_target_time(self):
-    now = datetime.now(IST)
-    target_time = self.target_time
+        if target_time.tzinfo is None:
+            target_time = target_time.replace(tzinfo=IST)
+        else:
+            target_time = target_time.astimezone(IST)
 
-    if target_time.tzinfo is None:
-        target_time = target_time.replace(tzinfo=IST)
-    else:
-        target_time = target_time.astimezone(IST)
+        target_time = target_time.replace(
+            hour=(target_time.hour // 6) * 6,
+            minute=0,
+            second=0,
+            microsecond=0,
+        ).replace(tzinfo=None)
 
-    target_time = target_time.replace(
-        hour=(target_time.hour // 6) * 6,
-        minute=0,
-        second=0,
-        microsecond=0
-    )
+        now_time = now.replace(
+            hour=(now.hour // 6) * 6,
+            minute=0,
+            second=0,
+            microsecond=0,
+        ).replace(tzinfo=None)
 
-    now = now.replace(
-        hour=(now.hour // 6) * 6,
-        minute=0,
-        second=0,
-        microsecond=0
-    )
+        if not now_time <= target_time <= now_time + timedelta(days=2):
+            raise ValueError(
+                "Forecast target must be between now and 2 days from now."
+            )
 
-    if not now <= target_time <= now + timedelta(days=2):
-        raise ValueError("Forecast target must be between now and 2 days from now.")
+        self.target_time = target_time
 
-    self.target_time = target_time
-    return self
+        return self
 
-def prepare_input_pm25(data: ForecasterInput, target_time: datetime):
-    target_time = pd.to_datetime(target_time)
+
+def prepare_input_pm25(data: ForecasterInput, target_time: datetime, now_time: datetime):
+    target_time = pd.Timestamp(target_time)
+    now_time = pd.Timestamp(now_time)
     df_pm = read_pm(city=data.city)
     df_pm = add_pm_features(df_pm)
-    df_pm["time"] = pd.to_datetime(df_pm["time"], utc=True)
-    df_pm = df_pm[df_pm["time"] == df_pm["time"].max()].copy()
+    df_pm["time"] = pd.to_datetime(df_pm["time"])
+    
+    df_pm = df_pm[df_pm["time"] == now_time].copy()
     df_weather = read_weather(city=data.city)
+    df_weather["time"] = pd.to_datetime(df_weather["time"])
     df_weather = compute_features(df_weather, logger, target_time=target_time)
     df_pm.drop(columns=["time"], inplace=True)
     df_weather.drop(columns=["time"], inplace=True)
-    df = pd.merge(df_pm, df_weather, on=["city"], how="outer")
-    return df
+    return pd.merge(df_pm, df_weather, on=["city"], how="inner")
 
-def prepare_input_pm10(data: ForecasterInput, target_time: datetime):
-    target_time = pd.to_datetime(target_time, utc=True).floor("6h")
+def prepare_input_pm10(data: ForecasterInput, target_time: datetime,now_time: datetime):
+    target_time = pd.Timestamp(target_time)
+    now_time = pd.Timestamp(now_time)
     df_pm = read_pm(city=data.city)
     df_pm = add_ratio_features(df_pm)
-    df_pm["time"] = pd.to_datetime(df_pm["time"], utc=True)
-    df_pm = df_pm[df_pm["time"] == df_pm["time"].max()].copy()
+    df_pm["time"] = pd.to_datetime(df_pm["time"])
+    
+    df_pm = df_pm[df_pm["time"] == now_time].copy()
     df_weather = read_weather(city=data.city)
+    df_weather["time"] = pd.to_datetime(df_weather["time"])
     df_weather = compute_features(df_weather, logger, target_time=target_time)
     df_pm.drop(columns=["time"], inplace=True)
     df_weather.drop(columns=["time"], inplace=True)
-    df = pd.merge(df_pm, df_weather, on=["city"], how="outer")
-    return df
+    return pd.merge(df_pm, df_weather, on=["city"], how="inner")

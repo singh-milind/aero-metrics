@@ -7,7 +7,8 @@ import joblib
 router = APIRouter()
 import numpy as np
 import pandas as pd
-
+from zoneinfo import ZoneInfo
+IST = ZoneInfo("Asia/Kolkata")
 router = APIRouter()
 
 pm25_t_model = joblib.load("src/model_building/forecaster/pm25_model/t_model/pm25_forecaster_t.pkl")
@@ -27,11 +28,15 @@ expected_features_pm10_rest = pm10_t12_model.get_booster().feature_names
 
 @router.post("/forecast_pm25_auto")
 def predict(request: ForecasterInput):
-    start_time = (pd.Timestamp(request.target_time))
-    X = prepare_input_pm25(request, target_time=start_time)
-    X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12))
-    X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24))
-    X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48))
+    now_time = pd.Timestamp.now(tz=IST).tz_localize(None).floor("6h")
+    start_time = pd.Timestamp(request.target_time)
+    if start_time.tzinfo is not None:
+        start_time = start_time.tz_convert(IST).tz_localize(None)
+    start_time = start_time.floor("6h")
+    X = prepare_input_pm25(request, target_time=start_time, now_time=now_time)
+    X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
+    X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
+    X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48), now_time=now_time)
     X = X[expected_features_pm25]
     X12 = X12[expected_features_pm25]
     X24 = X24[expected_features_pm25]
@@ -54,21 +59,25 @@ def predict(request: ForecasterInput):
 
 @router.post("/forecast_pm10_auto")
 def predict(request: ForecasterInput):
-    start_time = pd.Timestamp(request.target_time).floor("6h")
-    
-    pm25_X = prepare_input_pm25(request, target_time=start_time)
-    pm25_X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12))
-    pm25_X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24))
-    pm25_X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48))
+    now_time = pd.Timestamp.now(tz=IST).tz_localize(None).floor("6h")
+    start_time = pd.Timestamp(request.target_time)
+    if start_time.tzinfo is not None:
+        start_time = start_time.tz_convert(IST).tz_localize(None)
+    start_time = start_time.floor("6h")
+
+    pm25_X = prepare_input_pm25(request, target_time=start_time, now_time=now_time)
+    pm25_X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
+    pm25_X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
+    pm25_X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48), now_time=now_time)
     pm25_X = pm25_X[expected_features_pm25]
     pm25_X12 = pm25_X12[expected_features_pm25]
     pm25_X24 = pm25_X24[expected_features_pm25]
     pm25_X48 = pm25_X48[expected_features_pm25]
     
-    pm10_X = prepare_input_pm10(request, target_time=start_time)
-    pm10_X12 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=12))
-    pm10_X24 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=24))
-    pm10_X48 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=48))
+    pm10_X = prepare_input_pm10(request, target_time=start_time, now_time=now_time)
+    pm10_X12 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
+    pm10_X24 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
+    pm10_X48 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=48), now_time=now_time)
     pm10_X = pm10_X[expected_features_pm10_t]
     pm10_X12 = pm10_X12[expected_features_pm10_rest]
     pm10_X24 = pm10_X24[expected_features_pm10_rest]
