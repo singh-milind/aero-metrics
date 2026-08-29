@@ -75,8 +75,9 @@ def get_aqi_data_for_all_cities(start_date, end_date):
     return india_aqi_df
 
 def main():
-    start_date = "2026-08-26"
-    end_date = "2026-08-28"
+    now = pd.Timestamp.now(tz=IST)
+    end_date = now.strftime("%Y-%m-%d")
+    start_date = (now - pd.Timedelta(days=2)).strftime("%Y-%m-%d")
     aqi_data = get_aqi_data_for_all_cities(start_date, end_date)
     if not aqi_data.empty:
         ingest(aqi_data)
