@@ -58,8 +58,6 @@ def compute_features(df, logger):
         df["wind_dir_cos"] = np.cos(np.deg2rad(df["wind_direction_10m"]))
         df.drop(columns=["wind_direction_10m"], inplace=True)
 
-        day_map = {"Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6}
-        df["day_of_week"] = df["day_of_week"].map(day_map)
         df["dow_sin"] = np.sin(2 * np.pi * df["day_of_week"] / 7)
         df["dow_cos"] = np.cos(2 * np.pi * df["day_of_week"] / 7)
         df.drop(columns=["day_of_week"], inplace=True)
@@ -68,9 +66,8 @@ def compute_features(df, logger):
         df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
         df.drop(columns=["month"], inplace=True)
         
-        if df["time_of_day"].dtype == object:
-            time_map = {"Morning": 6, "Afternoon": 12, "Evening": 18, "Midnight": 0}
-            df["hour"] = df["time_of_day"].map(time_map)
+        time_map = {"Morning": 6, "Afternoon": 12, "Evening": 18, "Midnight": 0}
+        df["hour"] = df["time_of_day"].map(time_map)
 
         df["hour_sin"] = np.sin(2 * np.pi * df["hour"] / 24)
         df["hour_cos"] = np.cos(2 * np.pi * df["hour"] / 24)
@@ -79,7 +76,8 @@ def compute_features(df, logger):
         categorical_cols = ["city", "weather_verdict", "time_of_day", "season_region"]
         df[categorical_cols] = df[categorical_cols].astype("category")
 
-
+        df = df.replace([np.inf, -np.inf], np.nan)
+        df = df.where(pd.notnull(df), None)
         logger.info("Feature computation completed successfully.")
         return df
 
