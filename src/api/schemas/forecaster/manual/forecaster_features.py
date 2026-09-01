@@ -41,8 +41,6 @@ def compute_features(df, logger, target_time, given_data):
         df.drop(columns=["regional_season", "region"], inplace=True)
 
 
-        day_map = {"Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6}
-        df["day_of_week"] = df["day_of_week"].map(day_map)
         df["dow_sin"] = np.sin(2 * np.pi * df["day_of_week"] / 7)
         df["dow_cos"] = np.cos(2 * np.pi * df["day_of_week"] / 7)
         df.drop(columns=["day_of_week"], inplace=True)

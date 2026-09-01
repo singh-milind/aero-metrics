@@ -61,12 +61,7 @@ class ForecasterInput(BaseModel):
             microsecond=0,
         ).replace(tzinfo=None)
 
-        now_time = now.replace(
-            hour=(now.hour // 6) * 6,
-            minute=0,
-            second=0,
-            microsecond=0,
-        ).replace(tzinfo=None)
+        now_time = now.replace(tzinfo=None)
 
         if not now_time <= target_time <= now_time + timedelta(days=2):
             raise ValueError(
