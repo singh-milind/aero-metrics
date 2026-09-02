@@ -11,8 +11,8 @@ from src.api.schemas.forecaster.manual.forecaster import (
     ForecasterInput as manual_input,
     prepare_input_pm25 as prepare_input_pm25_manual,
     prepare_input_pm10 as prepare_input_pm10_manual)
-from src.api.schemas.predictor.reasoning import PredictorReasoning
-from src.api.services.predictor_reasoning import generate_reasoning
+from src.api.schemas.forecaster.reasoning import ForecasterReasoning
+from src.api.services.forecaster_reasoning import generate_reasoning
 from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 router = APIRouter()
@@ -175,7 +175,12 @@ def local_shap_pm25_auto(request: auto_input, horizon: str):
         "abs_shap",
         ascending=False
     )
+    print("NaN values:")
+    print(df[df.isna().any(axis=1)])
 
+    print("Prediction:", prediction)
+    print("Base:", base_value)
+    print("SHAP NaN:", np.isnan(shap_values).any())
     return {
         "target": "pm25",
         "horizon": horizon,
@@ -408,16 +413,19 @@ def local_shap_pm10_manual(request: manual_input, horizon: str):
         "base_value": float(base_value),
         "data": df.to_dict(orient="records")
     }
-# @router.post("/predictor/local/reasoning")
-# def local_reasoning(request: PredictorReasoning):
-#     """
-#     Endpoint to generate reasoning for a local prediction based on SHAP values.
-#     """
-#     try:
-#         reasoning = generate_reasoning(request.model_dump())
-#         return reasoning
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Error generating reasoning: {str(e)}"
-#         )
+
+
+
+@router.post("/forecaster/local/reasoning")
+def local_reasoning(request: ForecasterReasoning, horizon: str):
+    """
+    Endpoint to generate reasoning for a local prediction based on SHAP values.
+    """
+    try:
+        reasoning = generate_reasoning(request.model_dump(), horizon)
+        return reasoning
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating reasoning: {str(e)}"
+        )
