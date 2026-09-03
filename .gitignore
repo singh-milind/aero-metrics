@@ -1,5 +1,5 @@
 # Logs
-logs/
+aero-metrics/logs/
 *.log
 
 # Data
