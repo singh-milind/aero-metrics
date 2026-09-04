@@ -1,24 +1,4 @@
 stages:
-  fetch_aqi_data:
-    cmd: python -m src.data_gathering.aqi_data
-    deps:
-      - src/data_gathering/aqi_data.py
-      - src/city_info.py
-      - params.yaml
-    outs:
-      - data/raw/aqi_data.csv
-
-
-  fetch_weather_data:
-    cmd: python -m src.data_gathering.weather_data
-    deps:
-      - src/data_gathering/weather_data.py
-      - src/city_info.py
-      - params.yaml
-    outs:
-      - data/raw/weather_data.csv
-
-
   preprocess_data:
     cmd: python -m src.data_preprocessing.preprocessing
     deps:

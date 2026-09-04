@@ -5,6 +5,7 @@ from pathlib import Path
 from src.feature_engineering.weather_features import apply_weather_verdict
 from src.feature_engineering.region import region_map
 from src.feature_engineering.temporal_features import apply_regional_season,add_time_features
+from src.database.ingest_historical_data import main as ingest_historical_data
 from src.utils.logger import get_logger
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -48,6 +49,9 @@ def main():
             df = apply_regional_season(df, logger)
             save_data(df, logger)
             logger.info(f"Feature engineering completed. Final dataset has {len(df):,} rows.")
+            ingest_historical_data()
+        except FileNotFoundError as e:
+            logger.error(f"File not found: {e.filename}. Ensure that the data gathering step has been completed.")
         except Exception:
             logger.exception("Feature engineering pipeline failed.")
             raise

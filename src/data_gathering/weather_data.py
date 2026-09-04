@@ -5,10 +5,6 @@ import pandas as pd
 from src.city_info import city_info
 from pathlib import Path
 from src.utils.logger import get_logger
-import yaml
-
-with open("params.yaml", "r") as f:
-    params = yaml.safe_load(f)
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 logger = get_logger("weather_fetch")
@@ -82,42 +78,41 @@ def fetch_weather_data(city_name, lat, lon, start_date, end_date):
 
     return None
 
-start_date = params["data-gathering"]["start-date"]
-end_date = params["data-gathering"]["end-date"]
-all_cities_data = []
+def main(start_date, end_date):
+    all_cities_data = []
 
-for i, (city, info) in enumerate(city_info.items(), start=1):
-    logger.info(f"[{i}/{len(city_info)}] Processing {city}")
+    for i, (city, info) in enumerate(city_info.items(), start=1):
+        logger.info(f"[{i}/{len(city_info)}] Processing {city}")
 
-    try:
-        df_city = fetch_weather_data(
-            city_name=city,
-            lat=info["lat"],
-            lon=info["lon"],
-            start_date=start_date,
-            end_date=end_date,
-        )
+        try:
+            df_city = fetch_weather_data(
+                city_name=city,
+                lat=info["lat"],
+                lon=info["lon"],
+                start_date=start_date,
+                end_date=end_date,
+            )
 
-        if df_city is not None:
-            all_cities_data.append(df_city)
+            if df_city is not None:
+                all_cities_data.append(df_city)
 
-    except Exception:
-        logger.exception(f"Failed to process {city}")
+        except Exception:
+            logger.exception(f"Failed to process {city}")
 
-    logger.info("Sleeping 2 seconds before next request...")
-    time.sleep(2)
+        logger.info("Sleeping 2 seconds before next request...")
+        time.sleep(2)
 
-if all_cities_data:
-    india_weather_df = pd.concat(all_cities_data, ignore_index=True)
-    logger.info(f"Final dataset shape: {india_weather_df.shape}")
-else:
-    logger.error("No data fetched.")
-    india_weather_df = pd.DataFrame()
+    if all_cities_data:
+        india_weather_df = pd.concat(all_cities_data, ignore_index=True)
+        logger.info(f"Final dataset shape: {india_weather_df.shape}")
+    else:
+        logger.error("No data fetched.")
+        india_weather_df = pd.DataFrame()
 
 
-DATA_DIR = ROOT_DIR / "data" / "raw"
+    DATA_DIR = ROOT_DIR / "data" / "raw"
 
-DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-india_weather_df.to_csv(DATA_DIR / "weather_data.csv", index=False)
-logger.info("Dataset saved to data/raw/weather_data.csv")
+    india_weather_df.to_csv(DATA_DIR / "weather_data.csv", index=False)
+    logger.info("Dataset saved to data/raw/weather_data.csv")

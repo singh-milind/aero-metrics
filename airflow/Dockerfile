@@ -1,4 +1,4 @@
-FROM apache/airflow:3.1.0-python3.13
+FROM apache/airflow:3.1.0-python3.12
 
 USER root
 
@@ -20,5 +20,4 @@ RUN pip install --no-cache-dir \
     joblib==1.5.3 \
     requests==2.34.2 \
     psycopg2-binary==2.9.12 \
-    sqlalchemy==2.0.52 \
     python-dotenv==1.2.3

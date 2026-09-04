@@ -20,3 +20,68 @@ stages:
       hash: md5
       md5: 9ee598cdd50474fa0f607a3c6389ca5a
       size: 12417733
+  preprocess_data:
+    cmd: python -m src.data_preprocessing.preprocessing
+    deps:
+    - path: data/raw/aqi_data.csv
+      hash: md5
+      md5: 9ee598cdd50474fa0f607a3c6389ca5a
+      size: 12417733
+      isexec: true
+    - path: data/raw/weather_data.csv
+      hash: md5
+      md5: 4ea1860720ca51193e79745fdf9151d7
+      size: 23284593
+      isexec: true
+    - path: src/data_preprocessing/preprocessing.py
+      hash: md5
+      md5: ebba5ad441286bc26c83bb277af3ecf6
+      size: 1761
+      isexec: true
+    outs:
+    - path: data/interim/merged_data.csv
+      hash: md5
+      md5: 536376d2f33ce2bd62f6b3351a9b672b
+      size: 27043982
+  feature_engineering:
+    cmd: python -m src.feature_engineering.build_features
+    deps:
+    - path: data/interim/merged_data.csv
+      hash: md5
+      md5: 536376d2f33ce2bd62f6b3351a9b672b
+      size: 27043982
+    - path: src/city_info.py
+      hash: md5
+      md5: 5f20dfe7cc53e2793fabdb57d2efd2c9
+      size: 3500
+      isexec: true
+    - path: src/feature_engineering/build_features.py
+      hash: md5
+      md5: b0e122cb365d3736a92b138139c5dcc4
+      size: 1955
+      isexec: true
+    - path: src/feature_engineering/city_to_region.py
+      hash: md5
+      md5: 3fadfd370b8a9e5e37e96cf5ec05261e
+      size: 125
+      isexec: true
+    - path: src/feature_engineering/region.py
+      hash: md5
+      md5: 328e7fe88e7983ac7e64743b1d7b834a
+      size: 638
+      isexec: true
+    - path: src/feature_engineering/temporal_features.py
+      hash: md5
+      md5: 0f35552e811e8221bf6730d4f5cbf687
+      size: 2639
+      isexec: true
+    - path: src/feature_engineering/weather_features.py
+      hash: md5
+      md5: 6faf4d37d10f938c1caa625bfe6a95a2
+      size: 1233
+      isexec: true
+    outs:
+    - path: data/processed/engineered_features.csv
+      hash: md5
+      md5: 5566e6150b974b0b8acae310da73e643
+      size: 38796011
