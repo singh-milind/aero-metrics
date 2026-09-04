@@ -200,3 +200,11 @@ stages:
       - src/model_building/forecaster/pm10_model/t48_model/pm10_global_shap.pkl
     metrics:
       - metrics/forecaster/pm10_model/t48_model_metrics.json
+
+  metadata_creation:
+    cmd: python -m src.metadata
+    deps:
+      - src/metadata.py
+      - data/processed/engineered_features.csv
+    outs:
+      - data/processed/metadata.json
