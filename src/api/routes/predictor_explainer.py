@@ -9,14 +9,14 @@ from src.api.services.predictor_reasoning import generate_reasoning
 
 router = APIRouter()
 
-pm25_global_shap = joblib.load("models/predictor/pm25/pm25_global_shap.pkl")
-pm10_global_shap = joblib.load("models/predictor/pm10/pm10_global_shap.pkl")
+pm25_global_shap = joblib.load("/models/predictor/pm25/pm25_global_shap.pkl")
+pm10_global_shap = joblib.load("/models/predictor/pm10/pm10_global_shap.pkl")
 
-pm25_explainer = joblib.load("models/predictor/pm25/pm25_explainer.pkl")
-pm10_explainer = joblib.load("models/predictor/pm10/pm10_explainer.pkl")
+pm25_explainer = joblib.load("/models/predictor/pm25/pm25_explainer.pkl")
+pm10_explainer = joblib.load("/models/predictor/pm10/pm10_explainer.pkl")
 
-pm25_model = joblib.load("models/predictor/pm25/pm25_predictor.pkl")
-pm10_model = joblib.load("models/predictor/pm10/pm10_predictor.pkl")
+pm25_model = joblib.load("/models/predictor/pm25/pm25_predictor.pkl")
+pm10_model = joblib.load("/models/predictor/pm10/pm10_predictor.pkl")
 
 expected_features_pm25 = pm25_model.get_booster().feature_names
 expected_features_pm10 = pm10_model.get_booster().feature_names

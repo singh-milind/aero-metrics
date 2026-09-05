@@ -1,8 +1,10 @@
 import logging
+import sys
 from pathlib import Path
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
+
 
 def get_logger(name):
     logger = logging.getLogger(name)
@@ -19,10 +21,12 @@ def get_logger(name):
     file_handler = logging.FileHandler(LOG_DIR / f"{name}.log")
     file_handler.setFormatter(formatter)
 
-    console_handler = logging.StreamHandler()
+    console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
 
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+
+    logger.propagate = False
 
     return logger

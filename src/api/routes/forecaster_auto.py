@@ -11,15 +11,15 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 router = APIRouter()
 
-pm25_t_model = joblib.load("models/forecaster/pm25/t_model/pm25_forecaster_t.pkl")
-pm25_t12_model = joblib.load("models/forecaster/pm25/t12_model/pm25_forecaster_t12.pkl")
-pm25_t24_model = joblib.load("models/forecaster/pm25/t24_model/pm25_forecaster_t24.pkl")
-pm25_t48_model = joblib.load( "models/forecaster/pm25/t48_model/pm25_forecaster_t48.pkl")
+pm25_t_model = joblib.load("/models/forecaster/pm25/t_model/pm25_forecaster_t.pkl")
+pm25_t12_model = joblib.load("/models/forecaster/pm25/t12_model/pm25_forecaster_t12.pkl")
+pm25_t24_model = joblib.load("/models/forecaster/pm25/t24_model/pm25_forecaster_t24.pkl")
+pm25_t48_model = joblib.load( "/models/forecaster/pm25/t48_model/pm25_forecaster_t48.pkl")
 
-pm10_t_model = joblib.load("models/forecaster/pm10/t_model/pm10_forecaster_t.pkl")
-pm10_t12_model = joblib.load("models/forecaster/pm10/t12_model/pm10_forecaster_t12.pkl")
-pm10_t24_model = joblib.load("models/forecaster/pm10/t24_model/pm10_forecaster_t24.pkl")
-pm10_t48_model = joblib.load("models/forecaster/pm10/t48_model/pm10_forecaster_t48.pkl")
+pm10_t_model = joblib.load("/models/forecaster/pm10/t_model/pm10_forecaster_t.pkl")
+pm10_t12_model = joblib.load("/models/forecaster/pm10/t12_model/pm10_forecaster_t12.pkl")
+pm10_t24_model = joblib.load("/models/forecaster/pm10/t24_model/pm10_forecaster_t24.pkl")
+pm10_t48_model = joblib.load("/models/forecaster/pm10/t48_model/pm10_forecaster_t48.pkl")
 
 expected_features_pm25 = pm25_t_model.get_booster().feature_names
 expected_features_pm10_t = pm10_t_model.get_booster().feature_names

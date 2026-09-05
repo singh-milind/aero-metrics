@@ -81,6 +81,7 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}:/opt/aero-metrics
+    - ${AIRFLOW_PROJ_DIR:-.}/models:/models
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -90,6 +91,21 @@ x-airflow-common:
       condition: service_healthy
 
 services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}/models:/models
+      - ${AIRFLOW_PROJ_DIR:-.}/data:/app/data
+      - ${AIRFLOW_PROJ_DIR:-.}/metrics:/app/metrics
+    env_file:
+      - .env
+    restart: unless-stopped
   postgres:
     image: postgres:16
     environment:
