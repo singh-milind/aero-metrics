@@ -17,16 +17,18 @@ def train_model(x_train, y_train, logger):
 
     hp = params["pm25_predictor"]["hyperparameters"]
 
+    import os
+
     dagshub.init(
-        repo_owner="singh-milind",
+        repo_owner=os.getenv("DAGSHUB_USERNAME"),
         repo_name="aero-metrics",
         mlflow=True
     )
 
     mlflow.set_tracking_uri(
-        "https://dagshub.com/singh-milind/aero-metrics.mlflow"
+        f"https://dagshub.com/{os.getenv('DAGSHUB_USERNAME')}/aero-metrics.mlflow"
     )
-    mlflow.set_experiment("pm25_predictor_new_data")
+    mlflow.set_experiment("pm25_predictor_production")
 
     model = XGBRegressor(
         objective=hp["objective"],
