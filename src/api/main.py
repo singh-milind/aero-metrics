@@ -4,7 +4,8 @@ from src.api.routes.forecaster_auto import router as forecaster_router
 from src.api.routes.forecaster_manual import router as forecaster_manual_router 
 from src.api.routes.predictor_explainer import router as predictor_explainer_router
 from src.api.routes.forecaster_explainer import router as forecaster_explainer_router
-
+from src.api.routes.analytics import router as analytics_router
+from src.api.routes.metrics import router as metrics_router
 
 app = FastAPI(title="Aero Metrics API")
 
@@ -14,6 +15,9 @@ app.include_router(forecaster_manual_router, prefix="/api")
 
 app.include_router(predictor_explainer_router,prefix="/api/explainer")
 app.include_router(forecaster_explainer_router,prefix="/api/explainer")
+
+app.include_router(analytics_router, prefix="/api/analytics")
+app.include_router(metrics_router, prefix="/api/metrics")
 
 @app.get("/")
 def root():
