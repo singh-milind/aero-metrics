@@ -43,7 +43,8 @@ def main():
     global_shap_values = explainer(X_test)
     global_shap_importance = dict(zip(X_test.columns, abs(global_shap_values.values).mean(axis=0)))
 
-    model_dir = ROOT_DIR / "src" / "model_building" / "forecaster" / "pm10_model" / "t24_model"
+    model_dir = ROOT_DIR / "models" / "forecaster" / "pm10" / "t24_model"
+    
     model_dir.mkdir(parents=True, exist_ok=True)
 
     joblib.dump(model, model_dir / "pm10_forecaster_t24.pkl")

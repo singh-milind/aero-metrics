@@ -7,8 +7,8 @@ router = APIRouter()
 
 import numpy as np
 
-model_pm10 = joblib.load("src/model_building/predictor/pm10_model/pm10_predictor.pkl")
-model_pm25 = joblib.load("src/model_building/predictor/pm25_model/pm25_predictor.pkl")
+model_pm10 = joblib.load("models/predictor/pm10/pm10_predictor.pkl")
+model_pm25 = joblib.load("models/predictor/pm25/pm25_predictor.pkl")
 
 expected_features_pm10 = model_pm10.get_booster().feature_names
 expected_features_pm25 = model_pm25.get_booster().feature_names
