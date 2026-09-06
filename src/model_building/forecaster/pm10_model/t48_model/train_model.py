@@ -21,15 +21,15 @@ def train_model(x_train, y_train, logger):
 
     import os
 
-    dagshub.init(
-        repo_owner=os.getenv("DAGSHUB_USERNAME"),
-        repo_name="aero-metrics",
-        mlflow=True
-    )
+    dagshub_username = os.getenv("DAGSHUB_USERNAME")
+    dagshub_token = os.getenv("DAGSHUB_TOKEN")
 
     mlflow.set_tracking_uri(
-        f"https://dagshub.com/{os.getenv('DAGSHUB_USERNAME')}/aero-metrics.mlflow"
+        f"https://dagshub.com/{dagshub_username}/aero-metrics.mlflow"
     )
+
+    os.environ["MLFLOW_TRACKING_USERNAME"] = dagshub_username
+    os.environ["MLFLOW_TRACKING_PASSWORD"] = dagshub_token
 
     mlflow.set_experiment("pm10_forecaster_t48_ratio_production")
 

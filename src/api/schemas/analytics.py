@@ -1,18 +1,19 @@
 from pydantic import BaseModel, field_validator, model_validator
 from datetime import datetime
 import json
-from pathlib import Path
 from zoneinfo import ZoneInfo
 from src.city_info import city_info
 
 IST = ZoneInfo("Asia/Kolkata")
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+from src.utils.blob_storage import download_blob_bytes
 
-json_path = BASE_DIR / "data" / "processed" / "metadata.json"
-
-with open(json_path, "r") as f:
-    meta_data = json.load(f)
+meta_data = json.loads(
+    download_blob_bytes(
+        "data",
+        "processed/metadata.json"
+    ).decode("utf-8")
+)
 
 
 cities = set(city_info.keys())

@@ -3,12 +3,14 @@
 from fastapi import APIRouter
 from src.api.schemas.predictor.predictor import PredictorInput, prepare_input
 import joblib
+from io import BytesIO
+from src.utils.blob_storage import download_blob_bytes
 router = APIRouter()
 
 import numpy as np
 
-model_pm10 = joblib.load("/models/predictor/pm10/pm10_predictor.pkl")
-model_pm25 = joblib.load("/models/predictor/pm25/pm25_predictor.pkl")
+model_pm10 = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_predictor.pkl")))
+model_pm25 = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_predictor.pkl")))
 
 expected_features_pm10 = model_pm10.get_booster().feature_names
 expected_features_pm25 = model_pm25.get_booster().feature_names

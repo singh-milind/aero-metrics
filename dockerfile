@@ -4,11 +4,32 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
 
-RUN pip install --no-cache-dir uv \
+RUN apt-get update \
+    && apt-get install -y git \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir uv \
     && uv sync --frozen --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY src ./src
 COPY config ./config
+COPY jobs ./jobs
+COPY data ./data
+COPY metrics ./metrics
+
+COPY .dvc ./.dvc
+COPY dvc.yaml .
+COPY dvc.lock .
+COPY params.yaml .
+COPY .gitignore .
+
+# Create Git repository for DVC
+RUN git init \
+    && git config user.email "docker@aero-metrics.local" \
+    && git config user.name "aero-metrics" \
+    && git add -A \
+    && git commit -m "Initial repository state"
 
 EXPOSE 8000
 

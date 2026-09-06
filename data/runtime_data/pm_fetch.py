@@ -50,28 +50,76 @@ def fetch_aqi_data(city_name, lat, lon, start_date, end_date):
 
 def get_aqi_data_for_all_cities(start_date, end_date):
     all_cities_data = []
+
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5
+
     for i, (city, info) in enumerate(city_info.items(), start=1):
-        try:
-            logger.info(f"[{i}/{len(city_info)}] Fetching {city}")
-            df_city = fetch_aqi_data(
-                city_name=city,
-                lat=info["lat"],
-                lon=info["lon"],
-                start_date=start_date,
-                end_date=end_date
+
+        df_city = None
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                logger.info(
+                    f"[{i}/{len(city_info)}] Fetching {city} "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+                df_city = fetch_aqi_data(
+                    city_name=city,
+                    lat=info["lat"],
+                    lon=info["lon"],
+                    start_date=start_date,
+                    end_date=end_date
+                )
+
+                if df_city is not None:
+                    break
+
+                logger.warning(
+                    f"{city}: No data returned "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            except Exception:
+                logger.exception(
+                    f"{city}: Unexpected failure "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            if attempt < MAX_RETRIES:
+                logger.info(
+                    f"{city}: Retrying in {RETRY_DELAY}s..."
+                )
+                time.sleep(RETRY_DELAY)
+
+        if df_city is not None:
+            all_cities_data.append(df_city)
+            logger.info(
+                f"{city}: Successfully fetched after "
+                f"{attempt} attempt(s)"
             )
-            if df_city is not None:
-                all_cities_data.append(df_city)
-        except Exception:
-            logger.exception(f"Failed processing {city}")
+        else:
+            logger.error(
+                f"{city}: Failed after {MAX_RETRIES} attempts. "
+                f"Moving to next city."
+            )
+
         logger.info("Sleeping 2s before next city...")
         time.sleep(2)
+
     if all_cities_data:
-        india_aqi_df = pd.concat(all_cities_data, ignore_index=True)
-        logger.info(f"Final dataset shape: {india_aqi_df.shape}")
+        india_aqi_df = pd.concat(
+            all_cities_data,
+            ignore_index=True
+        )
+        logger.info(
+            f"Final dataset shape: {india_aqi_df.shape}"
+        )
     else:
         logger.error("No data fetched.")
         india_aqi_df = pd.DataFrame()
+
     return india_aqi_df
 
 def main():

@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 from airflow.sdk import dag, task
 from airflow.timetables.trigger import DeltaTriggerTimetable
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 from src.data_gathering.weather_data import main as weather_main
 from src.data_gathering.aqi_data import main as aqi_main
@@ -44,8 +45,16 @@ def data_gathering_dag():
             end_date=end_date,
         )
 
-    collect_weather_data()
-    collect_aqi_data()
+    weather = collect_weather_data()
+    aqi = collect_aqi_data()
+
+    trigger_training = TriggerDagRunOperator(
+        task_id="trigger_model_training",
+        trigger_dag_id="model_training",
+        wait_for_completion=False,
+    )
+
+    [weather, aqi] >> trigger_training
 
 
 data_gathering_dag()

@@ -101,23 +101,59 @@ def fetch_historical_data(city_name, lat, lon, start_date, end_date):
 def get_historical_data(start_date, end_date):
     all_cities_data = []
 
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5
+
     for i, (city, info) in enumerate(city_info.items(), start=1):
-        logger.info(f"[{i}/{len(city_info)}] Processing historical data: {city}")
 
-        try:
-            df_city = fetch_historical_data(
-                city_name=city,
-                lat=info["lat"],
-                lon=info["lon"],
-                start_date=start_date,
-                end_date=end_date,
+        df_city = None
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                logger.info(
+                    f"[{i}/{len(city_info)}] Processing historical data: "
+                    f"{city} (attempt {attempt}/{MAX_RETRIES})"
+                )
+
+                df_city = fetch_historical_data(
+                    city_name=city,
+                    lat=info["lat"],
+                    lon=info["lon"],
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+
+                if df_city is not None:
+                    break
+
+                logger.warning(
+                    f"{city}: No historical data returned "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            except Exception:
+                logger.exception(
+                    f"{city}: Unexpected failure "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            if attempt < MAX_RETRIES:
+                logger.info(
+                    f"{city}: Retrying in {RETRY_DELAY}s..."
+                )
+                time.sleep(RETRY_DELAY)
+
+        if df_city is not None:
+            all_cities_data.append(df_city)
+            logger.info(
+                f"{city}: Historical data fetched successfully "
+                f"after {attempt} attempt(s)"
             )
-
-            if df_city is not None:
-                all_cities_data.append(df_city)
-
-        except Exception:
-            logger.exception(f"Failed to process {city}")
+        else:
+            logger.error(
+                f"{city}: Historical data failed after "
+                f"{MAX_RETRIES} attempts. Moving to next city."
+            )
 
         logger.info("Sleeping 2 seconds before next request...")
         time.sleep(2)
@@ -192,21 +228,57 @@ def fetch_forecast_data(city_name, lat, lon):
 def get_forecast_data():
     all_cities_data = []
 
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5
+
     for i, (city, info) in enumerate(city_info.items(), start=1):
-        logger.info(f"[{i}/{len(city_info)}] Processing forecast data: {city}")
 
-        try:
-            df_city = fetch_forecast_data(
-                city_name=city,
-                lat=info["lat"],
-                lon=info["lon"],
+        df_city = None
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                logger.info(
+                    f"[{i}/{len(city_info)}] Processing forecast data: "
+                    f"{city} (attempt {attempt}/{MAX_RETRIES})"
+                )
+
+                df_city = fetch_forecast_data(
+                    city_name=city,
+                    lat=info["lat"],
+                    lon=info["lon"],
+                )
+
+                if df_city is not None:
+                    break
+
+                logger.warning(
+                    f"{city}: No forecast data returned "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            except Exception:
+                logger.exception(
+                    f"{city}: Unexpected failure "
+                    f"(attempt {attempt}/{MAX_RETRIES})"
+                )
+
+            if attempt < MAX_RETRIES:
+                logger.info(
+                    f"{city}: Retrying in {RETRY_DELAY}s..."
+                )
+                time.sleep(RETRY_DELAY)
+
+        if df_city is not None:
+            all_cities_data.append(df_city)
+            logger.info(
+                f"{city}: Forecast data fetched successfully "
+                f"after {attempt} attempt(s)"
             )
-
-            if df_city is not None:
-                all_cities_data.append(df_city)
-
-        except Exception:
-            logger.exception(f"Failed to process {city}")
+        else:
+            logger.error(
+                f"{city}: Forecast data failed after "
+                f"{MAX_RETRIES} attempts. Moving to next city."
+            )
 
         logger.info("Sleeping 2 seconds before next request...")
         time.sleep(2)

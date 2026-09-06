@@ -12,7 +12,7 @@ from airflow.timetables.trigger import DeltaTriggerTimetable
         2023, 6, 30,
         tzinfo=ZoneInfo("Asia/Kolkata")
     ),
-    schedule=DeltaTriggerTimetable(delta=timedelta(days=15)),
+    schedule=None,
     catchup=False,
 )
 def model_training_dag():
