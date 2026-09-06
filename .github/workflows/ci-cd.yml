@@ -66,3 +66,9 @@ jobs:
       - name: Push Airflow image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/aero-metrics-airflow:latest
+      - name: Create .env
+        run: |
+          echo "DAGSHUB_USERNAME=${{ secrets.DAGSHUB_USERNAME }}" >> .env
+          echo "DAGSHUB_TOKEN=${{ secrets.DAGSHUB_TOKEN }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
