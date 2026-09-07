@@ -13,6 +13,12 @@ router = APIRouter()
 pm25_global_shap = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap.pkl")))
 pm10_global_shap = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap.pkl")))
 
+pm25_global_shap_values = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap_values.pkl")))
+pm25_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap_features.pkl")))
+
+pm10_global_shap_values = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap_values.pkl")))
+pm10_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap_features.pkl")))
+
 pm25_explainer = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_explainer.pkl")))
 pm10_explainer = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_explainer.pkl")))
 
@@ -22,26 +28,21 @@ pm10_model = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/p
 expected_features_pm25 = pm25_model.get_booster().feature_names
 expected_features_pm10 = pm10_model.get_booster().feature_names
 
-
 @router.get("/predictor/global")
 def get_global_shap(target: str):
     if target == "pm25":
-        shap_values = pm25_glo
-        feature_values = pm25_feature_values
+        importance = pm25_global_shap
+        shap_values = pm25_global_shap_values
+        feature_values = pm25_global_shap_features
     elif target == "pm10":
-        shap_values = pm10_shap_values
-        feature_values = pm10_feature_values
+        importance = pm10_global_shap
+        shap_values = pm10_global_shap_values
+        feature_values = pm10_global_shap_features
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="target must be 'pm25' or 'pm10'"
-        )
-
-    importance = np.abs(shap_values).mean(axis=0)
-    feature_names = list(feature_values.columns)
+        raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
 
     data = sorted(
-        zip(feature_names, importance),
+        importance.items(),
         key=lambda x: x[1],
         reverse=True
     )
@@ -56,7 +57,7 @@ def get_global_shap(target: str):
             for feature, value in data
         ],
         "beeswarm": {
-            "feature_names": feature_names,
+            "feature_names": list(feature_values.columns),
             "shap_values": shap_values.tolist(),
             "feature_values": feature_values.to_dict(orient="records")
         }

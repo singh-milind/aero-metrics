@@ -24,6 +24,36 @@ pm25_global_shap_t12 = joblib.load(BytesIO(download_blob_bytes("models", "foreca
 pm25_global_shap_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap.pkl")))
 pm25_global_shap_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap.pkl")))
 
+pm25_shap_values_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_global_shap_values.pkl")))
+pm25_shap_values_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_global_shap_values.pkl")))
+pm25_shap_values_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap_values.pkl")))
+pm25_shap_values_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap_values.pkl")))
+
+pm25_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_global_shap_features.pkl")))
+pm25_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_global_shap_features.pkl")))
+pm25_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap_features.pkl")))
+pm25_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap_features.pkl")))
+
+pm10_global_shap_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap.pkl")))
+pm10_global_shap_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap.pkl")))
+pm10_global_shap_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap.pkl")))
+pm10_global_shap_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap.pkl")))
+
+pm10_shap_values_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap_values.pkl")))
+pm10_shap_values_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap_values.pkl")))
+pm10_shap_values_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap_values.pkl")))
+pm10_shap_values_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap_values.pkl")))
+
+pm10_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap_features.pkl")))
+pm10_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap_features.pkl")))
+pm10_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap_features.pkl")))
+pm10_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap_features.pkl")))
+
+pm10_explainer_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_explainer.pkl")))
+pm10_explainer_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_explainer.pkl")))
+pm10_explainer_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_explainer.pkl")))
+pm10_explainer_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_explainer.pkl")))
+
 pm25_explainer_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_explainer.pkl")))
 pm25_explainer_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_explainer.pkl")))
 pm25_explainer_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_explainer.pkl")))
@@ -33,16 +63,6 @@ pm25_model_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm2
 pm25_model_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_forecaster_t12.pkl")))
 pm25_model_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_forecaster_t24.pkl")))
 pm25_model_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_forecaster_t48.pkl")))
-
-pm10_global_shap_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap.pkl")))
-pm10_global_shap_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap.pkl")))
-pm10_global_shap_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap.pkl")))
-pm10_global_shap_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap.pkl")))
-
-pm10_explainer_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_explainer.pkl")))
-pm10_explainer_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_explainer.pkl")))
-pm10_explainer_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_explainer.pkl")))
-pm10_explainer_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_explainer.pkl")))
 
 pm10_model_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_forecaster_t.pkl")))
 pm10_model_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_forecaster_t12.pkl")))
@@ -56,58 +76,38 @@ expected_features_pm10 = pm10_model_t.get_booster().feature_names
 
 
 @router.get("/forecaster/global")
-def get_global_shap(target: str,horizon: str):
-
+def get_global_shap(target: str, horizon: str):
+    if horizon not in ["t", "t12", "t24", "t48"]:
+        raise HTTPException(status_code=400, detail="horizon must be 't', 't12', 't24', or 't48'")
     if target == "pm25":
-        if horizon == "t":
-            shap_importance = pm25_global_shap_t
-        elif horizon == "t12":
-            shap_importance = pm25_global_shap_t12
-        elif horizon == "t24":
-            shap_importance = pm25_global_shap_t24
-        elif horizon == "t48":
-            shap_importance = pm25_global_shap_t48
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="horizon must be 't', 't12', 't24', or 't48'"
-            )
-
+        importance_map = {"t": pm25_global_shap_t, "t12": pm25_global_shap_t12, "t24": pm25_global_shap_t24, "t48": pm25_global_shap_t48}
+        shap_map = {"t": pm25_shap_values_t, "t12": pm25_shap_values_t12, "t24": pm25_shap_values_t24, "t48": pm25_shap_values_t48}
+        features_map = {"t": pm25_shap_features_t, "t12": pm25_shap_features_t12, "t24": pm25_shap_features_t24, "t48": pm25_shap_features_t48}
     elif target == "pm10":
-        if horizon == "t":
-            shap_importance = pm10_global_shap_t
-        elif horizon == "t12":
-            shap_importance = pm10_global_shap_t12
-        elif horizon == "t24":
-            shap_importance = pm10_global_shap_t24
-        elif horizon == "t48":
-            shap_importance = pm10_global_shap_t48
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail="horizon must be 't', 't12', 't24', or 't48'"
-            )
+        importance_map = {"t": pm10_global_shap_t, "t12": pm10_global_shap_t12, "t24": pm10_global_shap_t24, "t48": pm10_global_shap_t48}
+        shap_map = {"t": pm10_shap_values_t, "t12": pm10_shap_values_t12, "t24": pm10_shap_values_t24, "t48": pm10_shap_values_t48}
+        features_map = {"t": pm10_shap_features_t, "t12": pm10_shap_features_t12, "t24": pm10_shap_features_t24, "t48": pm10_shap_features_t48}
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="target must be 'pm25' or 'pm10'"
-        )
-    
-    data = sorted(
-    shap_importance.items(),
-    key=lambda x: x[1],
-    reverse=True
-    )
+        raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
+
+    shap_importance = importance_map[horizon]
+    shap_values = shap_map[horizon]
+    feature_values = features_map[horizon]
+
+    data = sorted(shap_importance.items(), key=lambda x: x[1], reverse=True)
+
     return {
         "target": target,
         "horizon": horizon,
         "data": [
-            {
-                "feature": feature,
-                "importance": float(importance)
-            }
+            {"feature": feature, "importance": float(importance)}
             for feature, importance in data
-        ]
+        ],
+        "beeswarm": {
+            "feature_names": list(feature_values.columns),
+            "shap_values": shap_values.tolist(),
+            "feature_values": feature_values.to_dict(orient="records")
+        }
     }
   
     
@@ -190,8 +190,6 @@ def local_shap_pm25_auto(request: auto_input, horizon: str):
         "base_value": float(base_value),
         "data": df.to_dict(orient="records")
     }
-
-
 @router.post("/predictor/local/pm25/manual")
 def local_shap_pm25_manual(request: manual_input, horizon: str):
     now_time = pd.Timestamp.now(tz=IST).tz_localize(None).floor("6h")
