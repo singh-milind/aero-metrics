@@ -49,7 +49,8 @@ def main():
     joblib.dump(model, model_dir / "pm25_forecaster_t24.pkl")
     joblib.dump(explainer, model_dir / "pm25_explainer.pkl")
     joblib.dump(global_shap_importance, model_dir / "pm25_global_shap.pkl")
-
+    joblib.dump(global_shap_values, model_dir / "pm25_global_shap_values.pkl")
+    joblib.dump(X_test, model_dir / "pm25_global_shap_feature_values.pkl")
 if __name__ == "__main__":
     main()
     

@@ -94,6 +94,11 @@ def build_more_features(df, logger):
             X[f"{col}_change_24h"] = (
                 df.groupby("city")[col].diff(4)
             )
+        
+        for col in weather_cols:
+            X[f"{col}_change_48h"] = (
+                df.groupby("city")[col].diff(8)
+            )
         temporal_cols = [
             "pm_ratio_lag_12h",
             "pm_ratio_lag_24h",
@@ -120,7 +125,12 @@ def build_more_features(df, logger):
             "relative_humidity_2m_change_24h",
             "wind_speed_10m_change_24h",
             "surface_pressure_change_24h",
-            "precipitation_change_24h"
+            "precipitation_change_24h",
+            "temperature_2m_change_48h",
+            "relative_humidity_2m_change_48h",
+            "wind_speed_10m_change_48h",
+            "surface_pressure_change_48h",
+            "precipitation_change_48h",
         ]
 
         valid = X[temporal_cols].notna().all(axis=1) & Y.notna()

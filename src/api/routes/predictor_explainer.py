@@ -25,32 +25,41 @@ expected_features_pm10 = pm10_model.get_booster().feature_names
 
 @router.get("/predictor/global")
 def get_global_shap(target: str):
-
     if target == "pm25":
-        shap_importance = pm25_global_shap
-
+        shap_values = pm25_glo
+        feature_values = pm25_feature_values
     elif target == "pm10":
-        shap_importance = pm10_global_shap
-
+        shap_values = pm10_shap_values
+        feature_values = pm10_feature_values
     else:
         raise HTTPException(
             status_code=400,
             detail="target must be 'pm25' or 'pm10'"
         )
+
+    importance = np.abs(shap_values).mean(axis=0)
+    feature_names = list(feature_values.columns)
+
     data = sorted(
-    shap_importance.items(),
-    key=lambda x: x[1],
-    reverse=True
+        zip(feature_names, importance),
+        key=lambda x: x[1],
+        reverse=True
     )
+
     return {
         "target": target,
         "data": [
             {
                 "feature": feature,
-                "importance": float(importance)
+                "importance": float(value)
             }
-            for feature, importance in data
-        ]
+            for feature, value in data
+        ],
+        "beeswarm": {
+            "feature_names": feature_names,
+            "shap_values": shap_values.tolist(),
+            "feature_values": feature_values.to_dict(orient="records")
+        }
     }
   
     

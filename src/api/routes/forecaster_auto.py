@@ -21,7 +21,8 @@ pm10_t12_model = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/p
 pm10_t24_model = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_forecaster_t24.pkl")))
 pm10_t48_model = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_forecaster_t48.pkl")))
 
-expected_features_pm25 = pm25_t_model.get_booster().feature_names
+expected_features_pm25_t = pm25_t_model.get_booster().feature_names
+expected_features_pm25_rest = pm25_t12_model.get_booster().feature_names
 expected_features_pm10_t = pm10_t_model.get_booster().feature_names
 expected_features_pm10_rest = pm10_t12_model.get_booster().feature_names
 
@@ -37,10 +38,10 @@ def predict(request: ForecasterInput):
     X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
     X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
     X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48), now_time=now_time)
-    X = X[expected_features_pm25]
-    X12 = X12[expected_features_pm25]
-    X24 = X24[expected_features_pm25]
-    X48 = X48[expected_features_pm25]
+    X = X[expected_features_pm25_t]
+    X12 = X12[expected_features_pm25_rest]
+    X24 = X24[expected_features_pm25_rest]
+    X48 = X48[expected_features_pm25_rest]
 
     t_prediction = pm25_t_model.predict(X)
     t12_prediction = pm25_t12_model.predict(X12)
@@ -69,11 +70,11 @@ def predict(request: ForecasterInput):
     pm25_X12 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
     pm25_X24 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
     pm25_X48 = prepare_input_pm25(request, target_time=start_time + pd.Timedelta(hours=48), now_time=now_time)
-    pm25_X = pm25_X[expected_features_pm25]
-    pm25_X12 = pm25_X12[expected_features_pm25]
-    pm25_X24 = pm25_X24[expected_features_pm25]
-    pm25_X48 = pm25_X48[expected_features_pm25]
-    
+    pm25_X = pm25_X[expected_features_pm25_t]
+    pm25_X12 = pm25_X12[expected_features_pm25_rest]
+    pm25_X24 = pm25_X24[expected_features_pm25_rest]
+    pm25_X48 = pm25_X48[expected_features_pm25_rest]
+
     pm10_X = prepare_input_pm10(request, target_time=start_time, now_time=now_time)
     pm10_X12 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=12), now_time=now_time)
     pm10_X24 = prepare_input_pm10(request, target_time=start_time + pd.Timedelta(hours=24), now_time=now_time)
