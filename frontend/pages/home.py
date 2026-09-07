@@ -3,15 +3,39 @@ import streamlit as st
 from resources.city_info import city_info
 
 
-st.title("AERO METRICS")
+st.markdown(
+    """
+    <div style="max-width: 820px; padding: 1.5rem 0 2rem;">
+        <p style="color: #38b9ff; font-size: 0.78rem; font-weight: 700;
+                  letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1rem;">
+            Environmental intelligence platform
+        </p>
+        <h1 style="margin-bottom: 1.25rem;">AERO<br><span style="color: #38b9ff;">METRICS</span></h1>
+        <p style="font-size: 1.25rem; color: #d7e6fb; max-width: 640px;">
+            Clearer air-quality insights for a cleaner, smarter India.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """
-    ### Intelligent Air Quality Analytics
-    #### for a Cleaner, Smarter India
-
-    **Predict • Forecast • Simulate • Analyze**
+    <div style="padding: 1.25rem 1.5rem; border: 1px solid rgba(56,185,255,0.2);
+                border-radius: 14px; background: rgba(17,20,23,0.66);">
+        <p style="margin: 0; color: #71839a;">
+            <strong style="color: #f2f5f7;">Predict</strong> current conditions
+            <span style="color: #38b9ff;"> / </span>
+            <strong style="color: #f2f5f7;">Forecast</strong> what comes next
+            <span style="color: #38b9ff;"> / </span>
+            <strong style="color: #f2f5f7;">Simulate</strong> possible outcomes
+            <span style="color: #38b9ff;"> / </span>
+            <strong style="color: #f2f5f7;">Understand</strong> the why
+        </p>
+    </div>
     """
+    ,
+    unsafe_allow_html=True,
 )
 
 st.write(
@@ -319,4 +343,3 @@ st.divider()
 st.caption(
     "Built with Python • Machine Learning • FastAPI • Streamlit • Docker • Azure"
 )
-
