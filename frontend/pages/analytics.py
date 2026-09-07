@@ -93,6 +93,8 @@ with st.sidebar:
         filter_weather = st.selectbox("Weather", ["All", "Pleasant / Normal", "Hot & Humid", "Windy & Clear", "Rainy / Washed", "Cold & Stagnant", "Hot & Dry"])
         filter_weekend = st.selectbox("Weekend", ["All", "Yes", "No"])
         filter_dates = st.checkbox("Date Range")
+        st.caption("Please Enter dates between 2023-06-30 and 2026-06-30. That's the date range available during training.")
+        st.caption("If no date is selected, all dates will be considered.")
         if filter_dates:
             filter_start_date = st.date_input("Start Date")
             filter_end_date = st.date_input("End Date")

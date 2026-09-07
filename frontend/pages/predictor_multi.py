@@ -136,7 +136,7 @@ if st.button("Predict AQI", type="primary", use_container_width=True):
             for city in selected_cities:
                 st.session_state.pop(f"{city}_pm25_reasoning_result", None)
                 st.session_state.pop(f"{city}_pm10_reasoning_result", None)
-
+            st.divider()
         except requests.exceptions.Timeout:
             st.error("The SHAP service took too long to respond.")
         except requests.exceptions.ConnectionError:
@@ -165,7 +165,7 @@ if st.session_state.get("multicity_prediction_done", False):
             st.metric("PM10", f"{round(result['pm10'])} µg/m³")
         with col3:
             st.metric("AQI", f"{round(result['aqi'])}")
-
+        st.divider()
     st.divider()
     st.subheader("SHAP Analysis")
 

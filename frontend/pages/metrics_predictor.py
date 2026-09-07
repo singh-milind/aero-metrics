@@ -1,2 +1,264 @@
 import streamlit as st
-st.title("Metrics")
+import requests
+import pandas as pd
+import plotly.graph_objects as go
+
+API_BASE_URL = st.secrets["API_BASE_URL"]
+METRICS_ENDPOINT = f"{API_BASE_URL}/api/metrics/predcitor"
+
+@st.cache_data
+def get_metrics(model):
+    response = requests.post(
+        METRICS_ENDPOINT,
+        params={"model": model},
+        timeout=30,
+    )
+    if not response.ok:
+        try:
+            detail = response.json().get("detail", response.text)
+        except ValueError:
+            detail = response.text
+        raise RuntimeError(f"API Error {response.status_code}: {detail}")
+    return response.json()
+
+st.title("Predictor Model Metrics")
+st.write("Performance, error, stability, and generalization metrics for the PM2.5 and PM10 prediction models.")
+st.divider()
+
+try:
+    pm25 = get_metrics("pm25")
+    pm10 = get_metrics("pm10")
+except Exception as e:
+    st.error(str(e))
+    st.stop()
+import streamlit as st
+
+st.title("🔄 Model Workflow")
+st.write("Model Used: XGBoost Regressor")
+
+st.markdown("""
+1.  **PM2.5 Model** predicts particulate concentration
+2.  **Ratio Model** estimates PM10/PM2.5 relationship
+3.  **Final PM10** = PM2.5 × Ratio
+4.  **AQI** calculated using CPCB & WHO formulas
+""")
+
+st.info("""
+⚠️ **Model Design Note:** PM2.5 and Ratio models are trained independently to avoid leakage. The ratio model does NOT use predicted PM2.5 as an input feature.
+""")
+
+st.divider()
+
+st.header("Model Performance")
+st.divider()
+st.divider()
+st.markdown("### PM2.5")
+c1, c2 ,c3= st.columns(3)
+with c1:
+        st.metric("Train R²", f"{pm25['mean_train_r2']:.2f}")
+with c2:
+        st.metric("Train MAE", f"{pm25['mean_train_mae']:.2f}")
+with c3:
+        st.metric("Train RMSE", f"{pm25['mean_train_rmse']:.2f}")
+st.divider()
+
+c4, c5, c6 ,c7= st.columns(4)
+with c4:
+        st.metric("CV R²", f"{pm25['mean_cv_r2']:.2f}")
+with c5:
+        st.metric("CV MAE", f"{pm25['mean_cv_mae']:.2f}")
+with c6:
+        st.metric("CV RMSE", f"{pm25['mean_cv_rmse']:.2f}")
+with c7:
+        st.metric("Generalization Gap", f"{pm25['generalization_gap']:.2f}")
+
+st.divider()
+st.divider()
+
+st.markdown("### PM10")
+c1, c2 ,c3= st.columns(3)
+with c1:
+        st.metric("Train R²", f"{pm10['mean_train_r2']:.2f}")
+with c2:
+        st.metric("Train MAE", f"{pm10['mean_train_mae']:.2f}")
+with c3:
+        st.metric("Train RMSE", f"{pm10['mean_train_rmse']:.2f}")
+st.divider()
+
+c4, c5, c6 ,c7= st.columns(4)
+with c4:
+        st.metric("CV R²", f"{pm10['mean_cv_r2']:.2f}")
+with c5:
+        st.metric("CV MAE", f"{pm10['mean_cv_mae']:.2f}")
+with c6:
+        st.metric("CV RMSE", f"{pm10['mean_cv_rmse']:.2f}")
+with c7:
+        st.metric("Generalization Gap", f"{pm10['generalization_gap']:.2f}")
+
+st.divider()
+
+st.subheader("R² Comparison")
+
+r2_df = pd.DataFrame({
+    "Model": ["PM2.5", "PM10"],
+    "Train R²": [pm25["mean_train_r2"], pm10["mean_train_r2"]],
+    "CV R²": [pm25["mean_cv_r2"], pm10["mean_cv_r2"]],
+})
+
+fig = go.Figure()
+fig.add_trace(go.Bar(
+    x=r2_df["Model"],
+    y=r2_df["Train R²"],
+    name="Train R²",
+    text=r2_df["Train R²"].round(4),
+    textposition="auto",
+))
+fig.add_trace(go.Bar(
+    x=r2_df["Model"],
+    y=r2_df["CV R²"],
+    name="CV R²",
+    text=r2_df["CV R²"].round(4),
+    textposition="auto",
+))
+fig.update_layout(
+    title="Train vs Cross-Validation R²",
+    yaxis_title="R² Score",
+    yaxis=dict(range=[0, 1]),
+    barmode="group",
+    height=450,
+)
+st.plotly_chart(fig, use_container_width=True)
+
+st.divider()
+
+st.subheader("Error Comparison")
+
+error_df = pd.DataFrame({
+    "Model": ["PM2.5", "PM10"],
+    "Train MAE": [pm25["mean_train_mae"], pm10["mean_train_mae"]],
+    "CV MAE": [pm25["mean_cv_mae"], pm10["mean_cv_mae"]],
+    "Train RMSE": [pm25["mean_train_rmse"], pm10["mean_train_rmse"]],
+    "CV RMSE": [pm25["mean_cv_rmse"], pm10["mean_cv_rmse"]],
+})
+
+col1, col2 = st.columns(2)
+
+with col1:
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["PM2.5", "PM10"],
+        y=error_df["Train MAE"],
+        name="Train MAE",
+        text=error_df["Train MAE"].round(4),
+        textposition="auto",
+    ))
+    fig.add_trace(go.Bar(
+        x=["PM2.5", "PM10"],
+        y=error_df["CV MAE"],
+        name="CV MAE",
+        text=error_df["CV MAE"].round(4),
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title="Mean Absolute Error",
+        yaxis_title="MAE",
+        barmode="group",
+        height=400,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+with col2:
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=["PM2.5", "PM10"],
+        y=error_df["Train RMSE"],
+        name="Train RMSE",
+        text=error_df["Train RMSE"].round(4),
+        textposition="auto",
+    ))
+    fig.add_trace(go.Bar(
+        x=["PM2.5", "PM10"],
+        y=error_df["CV RMSE"],
+        name="CV RMSE",
+        text=error_df["CV RMSE"].round(4),
+        textposition="auto",
+    ))
+    fig.update_layout(
+        title="Root Mean Squared Error",
+        yaxis_title="RMSE",
+        barmode="group",
+        height=400,
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+
+st.divider()
+
+st.divider()
+
+st.subheader("Complete Metrics")
+
+comparison_df = pd.DataFrame({
+    "Metric": [
+        "Mean Train R²",
+        "Mean CV R²",
+        "Mean Train MAE",
+        "Mean CV MAE",
+        "Mean Train RMSE",
+        "Mean CV RMSE",
+        "Std Train R²",
+        "Std CV R²",
+        "Std Train MAE",
+        "Std CV MAE",
+        "Std Train RMSE",
+        "Std CV RMSE",
+        "Generalization Gap",
+    ],
+    "PM2.5": [
+        pm25["mean_train_r2"],
+        pm25["mean_cv_r2"],
+        pm25["mean_train_mae"],
+        pm25["mean_cv_mae"],
+        pm25["mean_train_rmse"],
+        pm25["mean_cv_rmse"],
+        pm25["std_train_r2"],
+        pm25["std_cv_r2"],
+        pm25["std_train_mae"],
+        pm25["std_cv_mae"],
+        pm25["std_train_rmse"],
+        pm25["std_cv_rmse"],
+        pm25["generalization_gap"],
+    ],
+    "PM10": [
+        pm10["mean_train_r2"],
+        pm10["mean_cv_r2"],
+        pm10["mean_train_mae"],
+        pm10["mean_cv_mae"],
+        pm10["mean_train_rmse"],
+        pm10["mean_cv_rmse"],
+        pm10["std_train_r2"],
+        pm10["std_cv_r2"],
+        pm10["std_train_mae"],
+        pm10["std_cv_mae"],
+        pm10["std_train_rmse"],
+        pm10["std_cv_rmse"],
+        pm10["generalization_gap"],
+    ],
+})
+
+st.dataframe(
+    comparison_df.round(4),
+    use_container_width=True,
+    hide_index=True,
+)
+st.header("Note")
+st.write("The metrics above are derived from cross-validation and training results. They provide insights into the model's performance, stability, and generalization capabilities. Lower standard deviations indicate more stable performance across different folds of cross-validation.")
+st.divider()
+st.header("Want to understand how this model works are calculated?")
+if st.button(
+        "How It Works — Predictor",
+        use_container_width=True,
+        type="secondary",
+    ):
+        st.switch_page("pages/working_predictor.py")
