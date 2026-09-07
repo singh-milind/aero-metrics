@@ -27,6 +27,6 @@ models/predictor/
 models/forecaster/
 
 
-frontend/
+frontend/.streamlit/secrets.toml
 
 airflow/

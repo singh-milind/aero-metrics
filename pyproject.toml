@@ -16,6 +16,7 @@ dependencies = [
     "mlflow>=3.16.0",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
+    "plotly>=7.0.0",
     "psycopg2-binary>=2.9.12",
     "python-dotenv>=1.2.3",
     "pyyaml>=6.0.3",
@@ -24,6 +25,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "shap>=0.52.0",
     "sqlalchemy>=2.0.52",
+    "streamlit>=1.63.0",
     "uvicorn>=0.52.4",
     "xgboost>=3.4.1",
 ]
