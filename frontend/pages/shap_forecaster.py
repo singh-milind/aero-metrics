@@ -31,24 +31,34 @@ def get_global_shap(target, horizon):
     response = requests.get(
         GLOBAL_SHAP_ENDPOINT,
         params={"target": target, "horizon": horizon},
-        timeout=60,
+        timeout=120,
     )
     if not response.ok:
         try:
             detail = response.json().get("detail", response.text)
         except ValueError:
             detail = response.text
-        raise RuntimeError(f"API Error {response.status_code}: {detail}")
+        raise RuntimeError(
+            f"API Error {response.status_code}: {detail}"
+        )
 
     result = response.json()
 
-    df = pd.DataFrame(result["data"])
-    df = df.sort_values(
-        "importance",
-        ascending=False,
-    ).reset_index(drop=True)
+    df = pd.DataFrame(result.get("data", []))
+
+    if not df.empty:
+        df = (
+            df.sort_values(
+                "importance",
+                ascending=False,
+            )
+            .reset_index(drop=True)
+        )
 
     return result, df
+
+
+# CONTROLS
 
 col1, col2 = st.columns(2)
 
@@ -67,56 +77,131 @@ with col2:
     )
 
 try:
-    result, shap_df = get_global_shap(target, horizon)
+    result, shap_df = get_global_shap(
+        target,
+        horizon,
+    )
 except Exception as e:
     st.error(str(e))
     st.stop()
 
 if shap_df.empty:
-    st.warning("No SHAP data available for the selected model.")
+    st.warning(
+        "No SHAP data available for the selected model."
+    )
     st.stop()
 
 target_label = TARGET_LABELS[target]
 horizon_label = HORIZON_LABELS[horizon]
 
+
+# BEESWARM DATA
+
 beeswarm = result.get("beeswarm")
 
 if not beeswarm:
-    st.error("Beeswarm data was not returned by the API.")
+    st.error(
+        "Beeswarm data was not returned by the API."
+    )
     st.stop()
 
-feature_names = beeswarm["feature_names"]
-shap_values = np.asarray(beeswarm["shap_values"], dtype=float)
-feature_values = pd.DataFrame(beeswarm["feature_values"])
+feature_names = [
+    str(feature)
+    for feature in beeswarm.get(
+        "feature_names",
+        [],
+    )
+]
+
+shap_values = np.asarray(
+    beeswarm.get(
+        "shap_values",
+        [],
+    ),
+    dtype=np.float32,
+)
+
+feature_values = np.asarray(
+    beeswarm.get(
+        "feature_values",
+        [],
+    ),
+    dtype=np.float32,
+)
+
+
+# VALIDATE BEESWARM DATA
+
+if len(feature_names) == 0:
+    st.error(
+        "No beeswarm feature names were returned by the API."
+    )
+    st.stop()
 
 if shap_values.ndim != 2:
-    st.error("Invalid SHAP values returned by the API.")
+    st.error(
+        f"Invalid SHAP array shape: {shap_values.shape}"
+    )
+    st.stop()
+
+if feature_values.ndim != 2:
+    st.error(
+        f"Invalid feature value array shape: {feature_values.shape}"
+    )
+    st.stop()
+
+if shap_values.shape != feature_values.shape:
+    st.error(
+        f"SHAP/features shape mismatch: "
+        f"{shap_values.shape} vs {feature_values.shape}"
+    )
     st.stop()
 
 if shap_values.shape[1] != len(feature_names):
     st.error(
-        f"SHAP feature mismatch: {shap_values.shape[1]} SHAP columns "
-        f"but {len(feature_names)} feature names."
+        f"Feature mismatch: "
+        f"{shap_values.shape[1]} SHAP columns vs "
+        f"{len(feature_names)} feature names."
     )
     st.stop()
 
-col1, col2, col3 = st.columns(3)
+
+# METRICS
+
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric("Target", target_label)
+    st.metric(
+        "Target",
+        target_label,
+    )
 
 with col2:
-    st.metric("Forecast Horizon", horizon_label)
+    st.metric(
+        "Forecast Horizon",
+        horizon_label,
+    )
 
 with col3:
-    st.metric("Features Analyzed", len(shap_df))
+    st.metric(
+        "Features Analyzed",
+        len(shap_df),
+    )
+
+with col4:
+    st.metric(
+        "SHAP Samples",
+        len(shap_values),
+    )
 
 st.divider()
+
 
 # GLOBAL FEATURE IMPORTANCE
 
 st.subheader(
-    f"Global Feature Importance — {target_label} ({horizon_label})"
+    f"Global Feature Importance — "
+    f"{target_label} ({horizon_label})"
 )
 
 plot_df = shap_df.copy()
@@ -147,11 +232,19 @@ fig = go.Figure(
 )
 
 fig.update_layout(
-    height=max(600, len(plot_df) * 30),
+    height=max(
+        600,
+        len(plot_df) * 30,
+    ),
     xaxis_title="Mean |SHAP Value|",
     yaxis_title="Feature",
     showlegend=False,
-    margin=dict(l=20, r=20, t=30, b=20),
+    margin=dict(
+        l=20,
+        r=20,
+        t=30,
+        b=20,
+    ),
 )
 
 st.plotly_chart(
@@ -161,10 +254,12 @@ st.plotly_chart(
 
 st.divider()
 
+
 # SHAP BEESWARM
 
 st.subheader(
-    f"SHAP Beeswarm — {target_label} ({horizon_label})"
+    f"SHAP Beeswarm — "
+    f"{target_label} ({horizon_label})"
 )
 
 st.caption(
@@ -174,11 +269,18 @@ st.caption(
     "feature values and blue indicates lower feature values."
 )
 
-# Display only the most important features.
-# The API still returns all features.
-max_features = min(20, len(shap_df))
+max_features = min(
+    20,
+    len(shap_df),
+    len(feature_names),
+)
 
-selected_features = shap_df.head(max_features)["feature"].tolist()
+selected_features = (
+    shap_df["feature"]
+    .astype(str)
+    .head(max_features)
+    .tolist()
+)
 
 feature_indices = [
     feature_names.index(feature)
@@ -194,17 +296,7 @@ for y_pos, feature_idx in enumerate(feature_indices):
     feature_name = feature_names[feature_idx]
 
     shap_col = shap_values[:, feature_idx]
-
-    if feature_name in feature_values.columns:
-        raw_feature_values = pd.to_numeric(
-            feature_values[feature_name],
-            errors="coerce",
-        ).to_numpy(dtype=float)
-    else:
-        raw_feature_values = np.full(
-            len(shap_col),
-            np.nan,
-        )
+    raw_feature_values = feature_values[:, feature_idx]
 
     valid = np.isfinite(shap_col)
 
@@ -214,7 +306,6 @@ for y_pos, feature_idx in enumerate(feature_indices):
     if len(shap_col) == 0:
         continue
 
-    # Sort SHAP values for a cleaner beeswarm distribution.
     order = np.argsort(shap_col)
 
     x = shap_col[order]
@@ -223,37 +314,59 @@ for y_pos, feature_idx in enumerate(feature_indices):
     finite_values = np.isfinite(values)
 
     if finite_values.any():
-        min_value = np.nanmin(values)
-        max_value = np.nanmax(values)
+        min_value = np.nanmin(
+            values[finite_values]
+        )
+        max_value = np.nanmax(
+            values[finite_values]
+        )
 
         if max_value > min_value:
-            normalized = np.full(len(values), 0.5)
+            normalized = np.full(
+                len(values),
+                0.5,
+                dtype=np.float32,
+            )
+
             normalized[finite_values] = (
-                (values[finite_values] - min_value)
-                / (max_value - min_value)
+                (
+                    values[finite_values]
+                    - min_value
+                )
+                / (
+                    max_value
+                    - min_value
+                )
             )
         else:
-            normalized = np.full(len(values), 0.5)
+            normalized = np.full(
+                len(values),
+                0.5,
+                dtype=np.float32,
+            )
     else:
-        normalized = np.full(len(values), 0.5)
+        normalized = np.full(
+            len(values),
+            0.5,
+            dtype=np.float32,
+        )
 
-    # Vertical jitter creates the beeswarm appearance.
     jitter = rng.uniform(
         -0.22,
         0.22,
         len(x),
     )
 
-    hover_values = np.where(
-        np.isfinite(values),
-        values,
-        np.nan,
-    )
-
     fig.add_trace(
         go.Scatter(
             x=x,
-            y=np.full(len(x), y_pos) + jitter,
+            y=(
+                np.full(
+                    len(x),
+                    y_pos,
+                )
+                + jitter
+            ),
             mode="markers",
             marker=dict(
                 size=5,
@@ -271,9 +384,11 @@ for y_pos, feature_idx in enumerate(feature_indices):
                     else None
                 ),
             ),
-            customdata=hover_values,
+            customdata=values,
             hovertemplate=(
-                f"<b>{feature_name.replace('_', ' ').title()}</b>"
+                f"<b>"
+                f"{feature_name.replace('_', ' ').title()}"
+                f"</b>"
                 "<br>SHAP Value: %{x:.4f}"
                 "<br>Feature Value: %{customdata:.4f}"
                 "<extra></extra>"
@@ -283,8 +398,12 @@ for y_pos, feature_idx in enumerate(feature_indices):
     )
 
 display_names = [
-    feature.replace("_", " ").title()
+    feature.replace(
+        "_",
+        " ",
+    ).title()
     for feature in selected_features
+    if feature in feature_names
 ]
 
 fig.add_vline(
@@ -294,17 +413,29 @@ fig.add_vline(
 )
 
 fig.update_layout(
-    height=max(600, len(feature_indices) * 38),
+    height=max(
+        600,
+        len(feature_indices) * 38,
+    ),
     xaxis_title="SHAP Value",
     yaxis_title="Feature",
     yaxis=dict(
         tickmode="array",
-        tickvals=list(range(len(feature_indices))),
+        tickvals=list(
+            range(
+                len(feature_indices)
+            )
+        ),
         ticktext=display_names,
         autorange="reversed",
     ),
     showlegend=False,
-    margin=dict(l=20, r=20, t=20, b=20),
+    margin=dict(
+        l=20,
+        r=20,
+        t=20,
+        b=20,
+    ),
 )
 
 st.plotly_chart(
@@ -312,24 +443,39 @@ st.plotly_chart(
     use_container_width=True,
 )
 
+st.caption(
+    "Red indicates higher feature values and blue indicates lower "
+    "feature values. Points to the right increase the prediction; "
+    "points to the left decrease it."
+)
+
 st.divider()
+
 
 # FEATURE IMPORTANCE DETAILS
 
-st.subheader("Feature Importance Details")
+st.subheader(
+    "Feature Importance Details"
+)
 
 table_df = shap_df.copy()
 
 table_df.insert(
     0,
     "Rank",
-    range(1, len(table_df) + 1),
+    range(
+        1,
+        len(table_df) + 1,
+    ),
 )
 
 table_df["feature"] = (
     table_df["feature"]
     .astype(str)
-    .str.replace("_", " ")
+    .str.replace(
+        "_",
+        " ",
+    )
     .str.title()
 )
 

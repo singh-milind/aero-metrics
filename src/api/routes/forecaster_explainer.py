@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 import numpy as np
 from fastapi import APIRouter, HTTPException
+from src.utils.logger import get_logger
 
 from src.api.schemas.forecaster.auto.forecaster import (
     ForecasterInput as auto_input,
@@ -18,6 +19,7 @@ from io import BytesIO
 from src.utils.blob_storage import download_blob_bytes
 IST = ZoneInfo("Asia/Kolkata")
 router = APIRouter()
+logger=get_logger("forecaster_explainer")
 
 pm25_global_shap_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_global_shap.pkl")))
 pm25_global_shap_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_global_shap.pkl")))
@@ -78,43 +80,221 @@ expected_features_pm10 = pm10_model_t.get_booster().feature_names
 @router.get("/forecaster/global")
 def get_global_shap(target: str, horizon: str):
     if horizon not in ["t", "t12", "t24", "t48"]:
-        raise HTTPException(status_code=400, detail="horizon must be 't', 't12', 't24', or 't48'")
+        raise HTTPException(
+            status_code=400,
+            detail="horizon must be 't', 't12', 't24', or 't48'"
+        )
+
+    logger.info(
+        f"Fetching global SHAP for target: {target}, horizon: {horizon}"
+    )
+
     if target == "pm25":
-        importance_map = {"t": pm25_global_shap_t, "t12": pm25_global_shap_t12, "t24": pm25_global_shap_t24, "t48": pm25_global_shap_t48}
-        shap_map = {"t": pm25_shap_values_t, "t12": pm25_shap_values_t12, "t24": pm25_shap_values_t24, "t48": pm25_shap_values_t48}
-        features_map = {"t": pm25_shap_features_t, "t12": pm25_shap_features_t12, "t24": pm25_shap_features_t24, "t48": pm25_shap_features_t48}
+        importance_map = {
+            "t": pm25_global_shap_t,
+            "t12": pm25_global_shap_t12,
+            "t24": pm25_global_shap_t24,
+            "t48": pm25_global_shap_t48,
+        }
+        shap_map = {
+            "t": pm25_shap_values_t,
+            "t12": pm25_shap_values_t12,
+            "t24": pm25_shap_values_t24,
+            "t48": pm25_shap_values_t48,
+        }
+        features_map = {
+            "t": pm25_shap_features_t,
+            "t12": pm25_shap_features_t12,
+            "t24": pm25_shap_features_t24,
+            "t48": pm25_shap_features_t48,
+        }
+
     elif target == "pm10":
-        importance_map = {"t": pm10_global_shap_t, "t12": pm10_global_shap_t12, "t24": pm10_global_shap_t24, "t48": pm10_global_shap_t48}
-        shap_map = {"t": pm10_shap_values_t, "t12": pm10_shap_values_t12, "t24": pm10_shap_values_t24, "t48": pm10_shap_values_t48}
-        features_map = {"t": pm10_shap_features_t, "t12": pm10_shap_features_t12, "t24": pm10_shap_features_t24, "t48": pm10_shap_features_t48}
+        importance_map = {
+            "t": pm10_global_shap_t,
+            "t12": pm10_global_shap_t12,
+            "t24": pm10_global_shap_t24,
+            "t48": pm10_global_shap_t48,
+        }
+        shap_map = {
+            "t": pm10_shap_values_t,
+            "t12": pm10_shap_values_t12,
+            "t24": pm10_shap_values_t24,
+            "t48": pm10_shap_values_t48,
+        }
+        features_map = {
+            "t": pm10_shap_features_t,
+            "t12": pm10_shap_features_t12,
+            "t24": pm10_shap_features_t24,
+            "t48": pm10_shap_features_t48,
+        }
+
     else:
-        raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
+        raise HTTPException(
+            status_code=400,
+            detail="target must be 'pm25' or 'pm10'"
+        )
 
-    shap_importance = importance_map[horizon]
-    shap_values = np.asarray(shap_map[horizon])
-    feature_values = features_map[horizon]
+    importance = importance_map[horizon]
+    shap_raw = shap_map[horizon]
+    feature_values_raw = features_map[horizon]
 
-    max_samples = 3000
-    if len(shap_values) > max_samples:
+    logger.info("Selected SHAP artifacts")
+
+    MAX_SAMPLES = 3000
+    TOP_FEATURES = 20
+
+    # Extract numeric SHAP values from SHAP Explanation
+    if hasattr(shap_raw, "values"):
+        shap_source = shap_raw.values
+    else:
+        shap_source = shap_raw
+
+    logger.info(
+        f"SHAP source type: {type(shap_source)}"
+    )
+
+    # Get dimensions
+    shap_rows = len(shap_source)
+    feature_rows = len(feature_values_raw)
+
+    logger.info(
+        f"SHAP rows: {shap_rows}, "
+        f"Feature rows: {feature_rows}"
+    )
+
+    if shap_rows != feature_rows:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"SHAP/features row mismatch: "
+                f"{shap_rows} vs {feature_rows}"
+            )
+        )
+
+    # Global importance
+    importance_data = sorted(
+        importance.items(),
+        key=lambda x: float(x[1]),
+        reverse=True
+    )
+
+    top_features = [
+        str(feature)
+        for feature, _ in importance_data[:TOP_FEATURES]
+    ]
+
+    logger.info(
+        f"Top features selected: {top_features}"
+    )
+
+    # Sample BEFORE converting the complete matrix
+    if shap_rows > MAX_SAMPLES:
         rng = np.random.default_rng(42)
-        indices = rng.choice(len(shap_values), max_samples, replace=False)
-        indices.sort()
-        shap_values = shap_values[indices]
-        feature_values = feature_values.iloc[indices]
 
-    data = sorted(shap_importance.items(), key=lambda x: float(x[1]), reverse=True)
+        indices = rng.choice(
+            shap_rows,
+            MAX_SAMPLES,
+            replace=False
+        )
+
+        indices.sort()
+    else:
+        indices = np.arange(shap_rows)
+
+    logger.info(
+        f"Sampling {len(indices)} SHAP rows"
+    )
+
+    # Slice numeric SHAP values
+    shap_sample = shap_source[indices]
+
+    # Slice matching feature rows
+    feature_sample = feature_values_raw.iloc[indices]
+
+    logger.info("Sample extracted")
+
+    # Convert ONLY the sampled SHAP values
+    shap_values = np.asarray(
+        shap_sample,
+        dtype=np.float32
+    )
+
+    logger.info(
+        f"SHAP sample shape: {shap_values.shape}"
+    )
+
+    if shap_values.ndim != 2:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Expected 2D SHAP values, "
+                f"got shape {shap_values.shape}"
+            )
+        )
+
+    # Feature names
+    feature_names = [
+        str(feature)
+        for feature in feature_sample.columns
+    ]
+
+    # Match top features to SHAP columns
+    selected_indices = [
+        feature_names.index(feature)
+        for feature in top_features
+        if feature in feature_names
+    ]
+
+    selected_features = [
+        feature_names[i]
+        for i in selected_indices
+    ]
+
+    logger.info(
+        f"Selected {len(selected_features)} beeswarm features"
+    )
+
+    # Select top SHAP columns
+    selected_shap = shap_values[
+        :,
+        selected_indices
+    ]
+
+    # Select corresponding feature values
+    selected_feature_values = (
+        feature_sample
+        .iloc[:, selected_indices]
+        .apply(
+            pd.to_numeric,
+            errors="coerce"
+        )
+        .fillna(0)
+        .to_numpy(
+            dtype=np.float32
+        )
+    )
+
+    logger.info(
+        f"Final beeswarm shapes: "
+        f"SHAP={selected_shap.shape}, "
+        f"features={selected_feature_values.shape}"
+    )
 
     return {
         "target": target,
         "horizon": horizon,
         "data": [
-            {"feature": str(feature), "importance": float(importance)}
-            for feature, importance in data
+            {
+                "feature": str(feature),
+                "importance": float(value)
+            }
+            for feature, value in importance_data
         ],
         "beeswarm": {
-            "feature_names": [str(feature) for feature in feature_values.columns],
-            "shap_values": shap_values.tolist(),
-            "feature_values": feature_values.to_dict(orient="records")
+            "feature_names": selected_features,
+            "shap_values": selected_shap.tolist(),
+            "feature_values": selected_feature_values.tolist()
         }
     }
   

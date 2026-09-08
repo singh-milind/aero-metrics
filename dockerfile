@@ -13,7 +13,6 @@ RUN apt-get update \
 ENV PATH="/app/.venv/bin:$PATH"
 
 COPY src ./src
-COPY config ./config
 COPY jobs ./jobs
 COPY data ./data
 COPY metrics ./metrics

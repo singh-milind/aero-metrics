@@ -32,30 +32,123 @@ expected_features_pm10 = pm10_model.get_booster().feature_names
 def get_global_shap(target: str):
     if target == "pm25":
         importance = pm25_global_shap
-        shap_values = pm25_global_shap_values
-        feature_values = pm25_global_shap_features
+        shap_raw = pm25_global_shap_values
+        feature_values_raw = pm25_global_shap_features
     elif target == "pm10":
         importance = pm10_global_shap
-        shap_values = pm10_global_shap_values
-        feature_values = pm10_global_shap_features
+        shap_raw = pm10_global_shap_values
+        feature_values_raw = pm10_global_shap_features
     else:
-        raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
+        raise HTTPException(
+            status_code=400,
+            detail="target must be 'pm25' or 'pm10'"
+        )
 
-    shap_values = np.asarray(shap_values)
-    max_samples = 3000
+    # Extract numeric values if artifact is a SHAP Explanation
+    if hasattr(shap_raw, "values"):
+        shap_source = shap_raw.values
+    else:
+        shap_source = shap_raw
 
-    if len(shap_values) > max_samples:
-        rng = np.random.default_rng(42)
-        indices = rng.choice(len(shap_values), max_samples, replace=False)
-        indices.sort()
-        shap_values = shap_values[indices]
-        feature_values = feature_values.iloc[indices]
+    TOP_FEATURES = 20
+    MAX_SAMPLES = 3000
 
-    data = sorted(
+    shap_rows = len(shap_source)
+    feature_rows = len(feature_values_raw)
+
+    if shap_rows != feature_rows:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"SHAP/features row mismatch: "
+                f"{shap_rows} vs {feature_rows}"
+            )
+        )
+
+    # Global feature importance
+    importance_data = sorted(
         importance.items(),
         key=lambda x: float(x[1]),
         reverse=True
     )
+
+    # Top features for beeswarm
+    top_features = [
+        str(feature)
+        for feature, _ in importance_data[:TOP_FEATURES]
+    ]
+
+    # Feature names
+    feature_names = [
+        str(feature)
+        for feature in feature_values_raw.columns
+    ]
+
+    # Match top features to columns
+    selected_indices = [
+        feature_names.index(feature)
+        for feature in top_features
+        if feature in feature_names
+    ]
+
+    selected_features = [
+        feature_names[i]
+        for i in selected_indices
+    ]
+
+    # Sample BEFORE converting the entire SHAP matrix
+    if shap_rows > MAX_SAMPLES:
+        rng = np.random.default_rng(42)
+
+        indices = rng.choice(
+            shap_rows,
+            MAX_SAMPLES,
+            replace=False
+        )
+
+        indices.sort()
+    else:
+        indices = np.arange(shap_rows)
+
+    shap_sample = shap_source[indices]
+    feature_sample = feature_values_raw.iloc[indices]
+
+    # Convert only sampled SHAP values
+    shap_values = np.asarray(
+        shap_sample,
+        dtype=np.float32
+    )
+
+    # Select top features
+    selected_shap_values = shap_values[
+        :,
+        selected_indices
+    ]
+
+    # Select matching feature values
+    selected_feature_values = (
+        feature_sample
+        .iloc[:, selected_indices]
+        .apply(
+            pd.to_numeric,
+            errors="coerce"
+        )
+        .fillna(0)
+        .to_numpy(
+            dtype=np.float32
+        )
+    )
+
+    # Final validation
+    if selected_shap_values.shape != selected_feature_values.shape:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Beeswarm shape mismatch: "
+                f"SHAP={selected_shap_values.shape}, "
+                f"features={selected_feature_values.shape}"
+            )
+        )
 
     return {
         "target": target,
@@ -64,12 +157,12 @@ def get_global_shap(target: str):
                 "feature": str(feature),
                 "importance": float(value)
             }
-            for feature, value in data
+            for feature, value in importance_data
         ],
         "beeswarm": {
-            "feature_names": [str(feature) for feature in feature_values.columns],
-            "shap_values": shap_values.tolist(),
-            "feature_values": feature_values.to_dict(orient="records")
+            "feature_names": selected_features,
+            "shap_values": selected_shap_values.tolist(),
+            "feature_values": selected_feature_values.tolist()
         }
     }
   
