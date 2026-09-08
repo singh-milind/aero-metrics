@@ -14,10 +14,10 @@ pm25_global_shap = joblib.load(BytesIO(download_blob_bytes("models", "predictor/
 pm10_global_shap = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap.pkl")))
 
 pm25_global_shap_values = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap_values.pkl")))
-pm25_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap_features.pkl")))
+pm25_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_global_shap_feature_values.pkl")))
 
 pm10_global_shap_values = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap_values.pkl")))
-pm10_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap_features.pkl")))
+pm10_global_shap_features = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_global_shap_feature_values.pkl")))
 
 pm25_explainer = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm25/pm25_explainer.pkl")))
 pm10_explainer = joblib.load(BytesIO(download_blob_bytes("models", "predictor/pm10/pm10_explainer.pkl")))

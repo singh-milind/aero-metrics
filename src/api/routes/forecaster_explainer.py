@@ -29,10 +29,10 @@ pm25_shap_values_t12 = joblib.load(BytesIO(download_blob_bytes("models", "foreca
 pm25_shap_values_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap_values.pkl")))
 pm25_shap_values_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap_values.pkl")))
 
-pm25_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_global_shap_features.pkl")))
-pm25_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_global_shap_features.pkl")))
-pm25_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap_features.pkl")))
-pm25_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap_features.pkl")))
+pm25_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t_model/pm25_global_shap_feature_values.pkl")))
+pm25_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t12_model/pm25_global_shap_feature_values.pkl")))
+pm25_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t24_model/pm25_global_shap_feature_values.pkl")))
+pm25_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm25/t48_model/pm25_global_shap_feature_values.pkl")))
 
 pm10_global_shap_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap.pkl")))
 pm10_global_shap_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap.pkl")))
@@ -44,10 +44,10 @@ pm10_shap_values_t12 = joblib.load(BytesIO(download_blob_bytes("models", "foreca
 pm10_shap_values_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap_values.pkl")))
 pm10_shap_values_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap_values.pkl")))
 
-pm10_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap_features.pkl")))
-pm10_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap_features.pkl")))
-pm10_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap_features.pkl")))
-pm10_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap_features.pkl")))
+pm10_shap_features_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_global_shap_feature_values.pkl")))
+pm10_shap_features_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_global_shap_feature_values.pkl")))
+pm10_shap_features_t24 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t24_model/pm10_global_shap_feature_values.pkl")))
+pm10_shap_features_t48 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t48_model/pm10_global_shap_feature_values.pkl")))
 
 pm10_explainer_t = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t_model/pm10_explainer.pkl")))
 pm10_explainer_t12 = joblib.load(BytesIO(download_blob_bytes("models", "forecaster/pm10/t12_model/pm10_explainer.pkl")))
@@ -83,6 +83,7 @@ def get_global_shap(target: str, horizon: str):
         importance_map = {"t": pm25_global_shap_t, "t12": pm25_global_shap_t12, "t24": pm25_global_shap_t24, "t48": pm25_global_shap_t48}
         shap_map = {"t": pm25_shap_values_t, "t12": pm25_shap_values_t12, "t24": pm25_shap_values_t24, "t48": pm25_shap_values_t48}
         features_map = {"t": pm25_shap_features_t, "t12": pm25_shap_features_t12, "t24": pm25_shap_features_t24, "t48": pm25_shap_features_t48}
+        
     elif target == "pm10":
         importance_map = {"t": pm10_global_shap_t, "t12": pm10_global_shap_t12, "t24": pm10_global_shap_t24, "t48": pm10_global_shap_t48}
         shap_map = {"t": pm10_shap_values_t, "t12": pm10_shap_values_t12, "t24": pm10_shap_values_t24, "t48": pm10_shap_values_t48}
