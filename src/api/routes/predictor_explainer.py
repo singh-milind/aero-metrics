@@ -41,9 +41,19 @@ def get_global_shap(target: str):
     else:
         raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
 
+    shap_values = np.asarray(shap_values)
+    max_samples = 3000
+
+    if len(shap_values) > max_samples:
+        rng = np.random.default_rng(42)
+        indices = rng.choice(len(shap_values), max_samples, replace=False)
+        indices.sort()
+        shap_values = shap_values[indices]
+        feature_values = feature_values.iloc[indices]
+
     data = sorted(
         importance.items(),
-        key=lambda x: x[1],
+        key=lambda x: float(x[1]),
         reverse=True
     )
 
@@ -51,13 +61,13 @@ def get_global_shap(target: str):
         "target": target,
         "data": [
             {
-                "feature": feature,
+                "feature": str(feature),
                 "importance": float(value)
             }
             for feature, value in data
         ],
         "beeswarm": {
-            "feature_names": list(feature_values.columns),
+            "feature_names": [str(feature) for feature in feature_values.columns],
             "shap_values": shap_values.tolist(),
             "feature_values": feature_values.to_dict(orient="records")
         }

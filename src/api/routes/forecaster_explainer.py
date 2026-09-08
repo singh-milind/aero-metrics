@@ -83,7 +83,6 @@ def get_global_shap(target: str, horizon: str):
         importance_map = {"t": pm25_global_shap_t, "t12": pm25_global_shap_t12, "t24": pm25_global_shap_t24, "t48": pm25_global_shap_t48}
         shap_map = {"t": pm25_shap_values_t, "t12": pm25_shap_values_t12, "t24": pm25_shap_values_t24, "t48": pm25_shap_values_t48}
         features_map = {"t": pm25_shap_features_t, "t12": pm25_shap_features_t12, "t24": pm25_shap_features_t24, "t48": pm25_shap_features_t48}
-        
     elif target == "pm10":
         importance_map = {"t": pm10_global_shap_t, "t12": pm10_global_shap_t12, "t24": pm10_global_shap_t24, "t48": pm10_global_shap_t48}
         shap_map = {"t": pm10_shap_values_t, "t12": pm10_shap_values_t12, "t24": pm10_shap_values_t24, "t48": pm10_shap_values_t48}
@@ -92,20 +91,28 @@ def get_global_shap(target: str, horizon: str):
         raise HTTPException(status_code=400, detail="target must be 'pm25' or 'pm10'")
 
     shap_importance = importance_map[horizon]
-    shap_values = shap_map[horizon]
+    shap_values = np.asarray(shap_map[horizon])
     feature_values = features_map[horizon]
 
-    data = sorted(shap_importance.items(), key=lambda x: x[1], reverse=True)
+    max_samples = 3000
+    if len(shap_values) > max_samples:
+        rng = np.random.default_rng(42)
+        indices = rng.choice(len(shap_values), max_samples, replace=False)
+        indices.sort()
+        shap_values = shap_values[indices]
+        feature_values = feature_values.iloc[indices]
+
+    data = sorted(shap_importance.items(), key=lambda x: float(x[1]), reverse=True)
 
     return {
         "target": target,
         "horizon": horizon,
         "data": [
-            {"feature": feature, "importance": float(importance)}
+            {"feature": str(feature), "importance": float(importance)}
             for feature, importance in data
         ],
         "beeswarm": {
-            "feature_names": list(feature_values.columns),
+            "feature_names": [str(feature) for feature in feature_values.columns],
             "shap_values": shap_values.tolist(),
             "feature_values": feature_values.to_dict(orient="records")
         }

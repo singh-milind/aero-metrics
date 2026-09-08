@@ -1,31 +1,38 @@
 import streamlit as st
 import requests
 import pandas as pd
-import plotly.express as px
+import numpy as np
+import plotly.graph_objects as go
 
 API_BASE_URL = st.secrets["API_BASE_URL"]
-
 GLOBAL_SHAP_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/global"
 
 st.title("Global SHAP Analysis — Forecaster")
-
 st.write(
     "Global SHAP analysis shows which features have the greatest overall "
     "influence on the forecaster's predictions for a selected target and horizon."
 )
-
 st.divider()
 
+HORIZON_LABELS = {
+    "t": "Current / T",
+    "t12": "12 Hours",
+    "t24": "24 Hours",
+    "t48": "48 Hours",
+}
+
+TARGET_LABELS = {
+    "pm25": "PM2.5",
+    "pm10": "PM10",
+}
+
+@st.cache_data(ttl=300)
 def get_global_shap(target, horizon):
     response = requests.get(
         GLOBAL_SHAP_ENDPOINT,
-        params={
-            "target": target,
-            "horizon": horizon,
-        },
-        timeout=30,
+        params={"target": target, "horizon": horizon},
+        timeout=60,
     )
-
     if not response.ok:
         try:
             detail = response.json().get("detail", response.text)
@@ -36,14 +43,12 @@ def get_global_shap(target, horizon):
     result = response.json()
 
     df = pd.DataFrame(result["data"])
-
     df = df.sort_values(
         "importance",
-        ascending=False
+        ascending=False,
     ).reset_index(drop=True)
 
-    return result["target"], result["horizon"], df
-
+    return result, df
 
 col1, col2 = st.columns(2)
 
@@ -51,26 +56,18 @@ with col1:
     target = st.selectbox(
         "Select Target",
         ["pm25", "pm10"],
-        format_func=lambda x: "PM2.5" if x == "pm25" else "PM10",
+        format_func=lambda x: TARGET_LABELS[x],
     )
 
 with col2:
     horizon = st.selectbox(
         "Select Horizon",
         ["t", "t12", "t24", "t48"],
-        format_func=lambda x: {
-            "t": "Current / T",
-            "t12": "12 Hours",
-            "t24": "24 Hours",
-            "t48": "48 Hours",
-        }[x],
+        format_func=lambda x: HORIZON_LABELS[x],
     )
 
 try:
-    model_target, model_horizon, shap_df = get_global_shap(
-        target,
-        horizon,
-    )
+    result, shap_df = get_global_shap(target, horizon)
 except Exception as e:
     st.error(str(e))
     st.stop()
@@ -79,43 +76,54 @@ if shap_df.empty:
     st.warning("No SHAP data available for the selected model.")
     st.stop()
 
+target_label = TARGET_LABELS[target]
+horizon_label = HORIZON_LABELS[horizon]
+
+beeswarm = result.get("beeswarm")
+
+if not beeswarm:
+    st.error("Beeswarm data was not returned by the API.")
+    st.stop()
+
+feature_names = beeswarm["feature_names"]
+shap_values = np.asarray(beeswarm["shap_values"], dtype=float)
+feature_values = pd.DataFrame(beeswarm["feature_values"])
+
+if shap_values.ndim != 2:
+    st.error("Invalid SHAP values returned by the API.")
+    st.stop()
+
+if shap_values.shape[1] != len(feature_names):
+    st.error(
+        f"SHAP feature mismatch: {shap_values.shape[1]} SHAP columns "
+        f"but {len(feature_names)} feature names."
+    )
+    st.stop()
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric(
-        "Target",
-        "PM2.5" if model_target == "pm25" else "PM10",
-    )
+    st.metric("Target", target_label)
 
 with col2:
-    st.metric(
-        "Forecast Horizon",
-        {
-            "t": "Current / T",
-            "t12": "12 Hours",
-            "t24": "24 Hours",
-            "t48": "48 Hours",
-        }.get(model_horizon, model_horizon),
-    )
+    st.metric("Forecast Horizon", horizon_label)
 
 with col3:
-    st.metric(
-        "Features Analyzed",
-        len(shap_df),
-    )
+    st.metric("Features Analyzed", len(shap_df))
 
 st.divider()
 
+# GLOBAL FEATURE IMPORTANCE
+
 st.subheader(
-    f"Global Feature Importance — "
-    f"{'PM2.5' if target == 'pm25' else 'PM10'} "
-    f"({horizon.upper()})"
+    f"Global Feature Importance — {target_label} ({horizon_label})"
 )
 
 plot_df = shap_df.copy()
 
 plot_df["feature"] = (
     plot_df["feature"]
+    .astype(str)
     .str.replace("_", " ")
     .str.title()
 )
@@ -125,25 +133,25 @@ plot_df = plot_df.sort_values(
     ascending=True,
 )
 
-fig = px.bar(
-    plot_df,
-    x="importance",
-    y="feature",
-    orientation="h",
-    labels={
-        "importance": "Mean |SHAP Value|",
-        "feature": "Feature",
-    },
-    title=(
-        f"Global SHAP Feature Importance — "
-        f"{'PM2.5' if target == 'pm25' else 'PM10'} "
-        f"({horizon.upper()})"
-    ),
+fig = go.Figure(
+    go.Bar(
+        x=plot_df["importance"],
+        y=plot_df["feature"],
+        orientation="h",
+        hovertemplate=(
+            "<b>%{y}</b>"
+            "<br>Mean |SHAP|: %{x:.4f}"
+            "<extra></extra>"
+        ),
+    )
 )
 
 fig.update_layout(
     height=max(600, len(plot_df) * 30),
+    xaxis_title="Mean |SHAP Value|",
+    yaxis_title="Feature",
     showlegend=False,
+    margin=dict(l=20, r=20, t=30, b=20),
 )
 
 st.plotly_chart(
@@ -152,6 +160,161 @@ st.plotly_chart(
 )
 
 st.divider()
+
+# SHAP BEESWARM
+
+st.subheader(
+    f"SHAP Beeswarm — {target_label} ({horizon_label})"
+)
+
+st.caption(
+    "Each point represents a sampled observation. "
+    "Positive SHAP values increase the prediction, while negative "
+    "SHAP values decrease the prediction. Red indicates higher "
+    "feature values and blue indicates lower feature values."
+)
+
+# Display only the most important features.
+# The API still returns all features.
+max_features = min(20, len(shap_df))
+
+selected_features = shap_df.head(max_features)["feature"].tolist()
+
+feature_indices = [
+    feature_names.index(feature)
+    for feature in selected_features
+    if feature in feature_names
+]
+
+fig = go.Figure()
+
+rng = np.random.default_rng(42)
+
+for y_pos, feature_idx in enumerate(feature_indices):
+    feature_name = feature_names[feature_idx]
+
+    shap_col = shap_values[:, feature_idx]
+
+    if feature_name in feature_values.columns:
+        raw_feature_values = pd.to_numeric(
+            feature_values[feature_name],
+            errors="coerce",
+        ).to_numpy(dtype=float)
+    else:
+        raw_feature_values = np.full(
+            len(shap_col),
+            np.nan,
+        )
+
+    valid = np.isfinite(shap_col)
+
+    shap_col = shap_col[valid]
+    raw_feature_values = raw_feature_values[valid]
+
+    if len(shap_col) == 0:
+        continue
+
+    # Sort SHAP values for a cleaner beeswarm distribution.
+    order = np.argsort(shap_col)
+
+    x = shap_col[order]
+    values = raw_feature_values[order]
+
+    finite_values = np.isfinite(values)
+
+    if finite_values.any():
+        min_value = np.nanmin(values)
+        max_value = np.nanmax(values)
+
+        if max_value > min_value:
+            normalized = np.full(len(values), 0.5)
+            normalized[finite_values] = (
+                (values[finite_values] - min_value)
+                / (max_value - min_value)
+            )
+        else:
+            normalized = np.full(len(values), 0.5)
+    else:
+        normalized = np.full(len(values), 0.5)
+
+    # Vertical jitter creates the beeswarm appearance.
+    jitter = rng.uniform(
+        -0.22,
+        0.22,
+        len(x),
+    )
+
+    hover_values = np.where(
+        np.isfinite(values),
+        values,
+        np.nan,
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=x,
+            y=np.full(len(x), y_pos) + jitter,
+            mode="markers",
+            marker=dict(
+                size=5,
+                color=normalized,
+                colorscale="RdBu_r",
+                cmin=0,
+                cmax=1,
+                opacity=0.65,
+                showscale=(y_pos == 0),
+                colorbar=(
+                    dict(
+                        title="Feature<br>Value",
+                    )
+                    if y_pos == 0
+                    else None
+                ),
+            ),
+            customdata=hover_values,
+            hovertemplate=(
+                f"<b>{feature_name.replace('_', ' ').title()}</b>"
+                "<br>SHAP Value: %{x:.4f}"
+                "<br>Feature Value: %{customdata:.4f}"
+                "<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
+
+display_names = [
+    feature.replace("_", " ").title()
+    for feature in selected_features
+]
+
+fig.add_vline(
+    x=0,
+    line_width=1,
+    line_dash="dash",
+)
+
+fig.update_layout(
+    height=max(600, len(feature_indices) * 38),
+    xaxis_title="SHAP Value",
+    yaxis_title="Feature",
+    yaxis=dict(
+        tickmode="array",
+        tickvals=list(range(len(feature_indices))),
+        ticktext=display_names,
+        autorange="reversed",
+    ),
+    showlegend=False,
+    margin=dict(l=20, r=20, t=20, b=20),
+)
+
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+)
+
+st.divider()
+
+# FEATURE IMPORTANCE DETAILS
 
 st.subheader("Feature Importance Details")
 
@@ -165,12 +328,14 @@ table_df.insert(
 
 table_df["feature"] = (
     table_df["feature"]
+    .astype(str)
     .str.replace("_", " ")
     .str.title()
 )
 
 table_df["importance"] = (
     table_df["importance"]
+    .astype(float)
     .round(4)
 )
 
@@ -178,8 +343,4 @@ st.dataframe(
     table_df,
     use_container_width=True,
     hide_index=True,
-)
-
-st.warning(
-    "Better plots and visualizations are coming soon. Stay tuned!"
 )
