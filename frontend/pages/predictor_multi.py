@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import requests
 import re
 import pandas as pd
@@ -45,7 +46,7 @@ def reasoning_text(result):
 
 
 # Configuration
-API_BASE_URL = st.secrets["API_BASE_URL"]
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 EXPLAINER_PM25_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/pm25"
 EXPLAINER_PM10_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/pm10"
 REASONING_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/reasoning"

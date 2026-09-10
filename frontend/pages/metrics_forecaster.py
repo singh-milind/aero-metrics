@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -19,7 +21,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-API_BASE_URL = st.secrets["API_BASE_URL"]
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 METRICS_ENDPOINT = f"{API_BASE_URL}/api/metrics/forecaster"
 
 HORIZONS = ["t", "t12", "t24", "t48"]

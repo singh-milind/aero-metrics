@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 
 
@@ -74,7 +76,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-API_BASE_URL = st.secrets["API_BASE_URL"].rstrip("/")
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 GITHUB_URL = "https://github.com/singh-milind"
 PROJECT_GITHUB_URL = "https://github.com/singh-milind/aero-metrics"
 LINKEDIN_URL = "https://www.linkedin.com/in/milind-singh-880a41314/"

@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 
 st.set_page_config(
@@ -6,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="auto",
 )
 
-API_BASE_URL = st.secrets["API_BASE_URL"]
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 
 st.markdown(
     """

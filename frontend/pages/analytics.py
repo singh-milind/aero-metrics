@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import requests
 import pandas as pd
 from datetime import datetime, time
@@ -27,7 +28,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-API_BASE_URL = st.secrets["API_BASE_URL"]
+
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 TRENDS_ENDPOINT = f"{API_BASE_URL}/api/analytics/trends"
 
 CATEGORICAL_FEATURES = [
@@ -90,7 +92,7 @@ st.markdown(
     '<div class="analytics-context">Define the dataset below, then read the comparisons that follow.</div>',
     unsafe_allow_html=True,
 )
-st.warning("If a chart is empty, the selected combination is not available in the training dataset. Try broadening the filters.")
+st.warning("If a chart is empty, the selected combination is not available in the training dataset. Try broadening the filters.\n\nPlease note that the analytics data is based on the training dataset and may not reflect real-time conditions.\n\nPlease wait a little while for the charts to load, as the analytics endpoint can take a few seconds to respond.")
 
 if "analytics_filters" not in st.session_state:
     st.session_state["analytics_filters"] = {
@@ -164,20 +166,21 @@ y_axis = st.session_state["analytics_y_axis"]
 filters = st.session_state["analytics_filters"]
 
 try:
-    weather_data = get_trend("weather_verdict", y_axis, filters)
-    weather_wind = get_trend("weather_verdict", "wind_speed_10m", filters)
-    season_data = get_trend("regional_season", y_axis, filters)
-    month_data = get_trend("month", y_axis, filters)
-    month_rain = get_trend("month", "precipitation", filters)
-    city_data = get_trend("city", y_axis, filters)
-    time_data = get_trend("time_of_day", y_axis, filters)
-    region_data = get_trend("region", y_axis, filters)
-    city_pm25 = get_trend("city", "pm2_5", filters)
-    city_pm10 = get_trend("city", "pm10", filters)
-    region_aqi = get_trend("region", "aqi", filters)
-    region_pm25 = get_trend("region", "pm2_5", filters)
-    season_pm25 = get_trend("regional_season", "pm2_5", filters)
-    season_pm10 = get_trend("regional_season", "pm10", filters)
+    weather_data = get_trend("weather_verdict", y_axis, filters).round(2)
+    weather_wind = get_trend("weather_verdict", "wind_speed_10m", filters).round(2)
+    season_data = get_trend("regional_season", y_axis, filters).round(2)
+    month_data = get_trend("month", y_axis, filters).round(2)
+    month_rain = get_trend("month", "precipitation", filters).round(2)
+    city_data = get_trend("city", y_axis, filters).round(2)
+    time_data = get_trend("time_of_day", y_axis, filters).round(2)
+    region_data = get_trend("region", y_axis, filters).round(2)
+    city_pm25 = get_trend("city", "pm2_5", filters).round(2)
+    city_pm10 = get_trend("city", "pm10", filters).round(2)
+    region_aqi = get_trend("region", "aqi", filters).round(2)
+    region_pm25 = get_trend("region", "pm2_5", filters).round(2)
+    region_pm10 = get_trend("region", "pm10", filters).round(2)
+    season_pm25 = get_trend("regional_season", "pm2_5", filters).round(2)
+    season_pm10 = get_trend("regional_season", "pm10", filters).round(2)
 except Exception as e:
     st.error(str(e))
     st.stop()
@@ -339,8 +342,8 @@ with comparison_columns[1]:
                 "pm10",
                 "pm2_5",
                 "PM2.5 vs PM10 by Season",
-                "Avg PM2.5",
                 "Avg PM10",
+                "Avg PM2.5",
                 " µg/m³",
                 show_text=False,
             )
@@ -359,8 +362,8 @@ with st.container(border=True):
             "pm10",
             "pm2_5",
             "PM2.5 vs PM10 by City",
-            "Avg PM2.5",
             "Avg PM10",
+            "Avg PM2.5",
             " µg/m³",
             show_text=False,
         )
@@ -402,12 +405,12 @@ with st.container(border=True):
 
 if generate_chart:
     try:
-        y1 = get_trend(x_axis, y_axis_1, filters)
+        y1 = get_trend(x_axis, y_axis_1, filters).round(2)
         if y1.empty:
             st.session_state["custom_chart"] = None
             st.warning("No data available for the selected filters.")
         elif chart_type == "Dual Axis Chart":
-            y2 = get_trend(x_axis, y_axis_2, filters)
+            y2 = get_trend(x_axis, y_axis_2, filters).round(2)
             if y2.empty:
                 st.session_state["custom_chart"] = None
                 st.warning("No data available for the selected filters.")

@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -24,7 +26,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-API_BASE_URL = st.secrets["API_BASE_URL"]
+API_BASE_URL = os.getenv("API_BASE_URL") or st.secrets["API_BASE_URL"]
 PM25_AUTO_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/local/pm25/auto"
 PM10_AUTO_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/local/pm10/auto"
 PM25_MANUAL_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/local/pm25/manual"
