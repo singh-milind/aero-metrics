@@ -1,23 +1,126 @@
 import streamlit as st
 import requests
 import pandas as pd
+import pydeck as pdk
 import plotly.graph_objects as go
 from resources.city_info import city_info
 from resources.pm_to_aqi import calculate_aqi
 from resources.plot_waterfall import plot_shap_waterfall
 
+st.markdown(
+    """
+    <style>
+    .simulator-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    .scenario-label {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.28rem 0.65rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    .scenario-label.base {
+        color: #64c8ff;
+        border: 1px solid rgba(56, 185, 255, 0.42);
+        background: rgba(56, 185, 255, 0.1);
+    }
+    .scenario-label.modified {
+        color: #c5a0ff;
+        border: 1px solid rgba(165, 105, 255, 0.46);
+        background: rgba(165, 105, 255, 0.12);
+    }
+    .scenario-heading.base {
+        border-left: 3px solid #38b9ff;
+        padding-left: 0.75rem;
+    }
+    .scenario-heading.modified {
+        border-left: 3px solid #a569ff;
+        padding-left: 0.75rem;
+    }
+    .scenario-divider {
+        width: 1px;
+        min-height: 100%;
+        margin: 0 auto;
+        background: linear-gradient(
+            to bottom,
+            transparent,
+            rgba(148, 163, 184, 0.38) 12%,
+            rgba(148, 163, 184, 0.38) 88%,
+            transparent
+        );
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 API_BASE_URL = st.secrets["API_BASE_URL"].rstrip("/")
 EXPLAINER_PM25_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/pm25"
 EXPLAINER_PM10_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/pm10"
 
-st.title("Air Quality Simulator")
-st.write("Change environmental conditions and compare their impact on PM2.5, PM10 and AQI.")
-st.divider()
+st.markdown('<p class="simulator-kicker">Scenario analysis · single city</p>', unsafe_allow_html=True)
+st.title("Simulate air quality changes")
+st.write("Adjust environmental conditions and compare how they affect PM2.5, PM10, and AQI.")
 
-st.header("Simulation Setup")
+st.markdown("### Simulation setup")
+with st.container(border=True):
+    st.markdown("#### City and location")
+    location_columns = st.columns([1, 1], gap="large")
 
-cities = sorted(city_info.keys())
-city = st.selectbox("City", cities)
+    with location_columns[0]:
+        cities = sorted(city_info.keys())
+        city = st.selectbox("City", cities)
+        st.caption("The same city is used for both the base and modified scenarios.")
+
+    with location_columns[1]:
+        selected_city = city_info[city]
+        selected_city_point = pd.DataFrame(
+            [{
+                "city": city,
+                "region": selected_city["region"],
+                "latitude": selected_city["lat"],
+                "longitude": selected_city["lon"],
+            }]
+        )
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style=None,
+                initial_view_state=pdk.ViewState(
+                    latitude=selected_city["lat"],
+                    longitude=selected_city["lon"],
+                    zoom=3.4,
+                    min_zoom=3.2,
+                    max_zoom=7,
+                ),
+                layers=[
+                    pdk.Layer(
+                        "ScatterplotLayer",
+                        data=selected_city_point,
+                        get_position="[longitude, latitude]",
+                        get_radius=26000,
+                        get_fill_color=[56, 185, 255, 220],
+                        get_line_color=[242, 245, 247, 230],
+                        line_width_min_pixels=2,
+                        pickable=True,
+                    )
+                ],
+                tooltip={
+                    "html": "<b>{city}</b><br/>{region} region",
+                    "style": {"color": "#f2f5f7"},
+                },
+            ),
+            height=220,
+            use_container_width=True,
+        )
 
 month_names = {
     1: "January", 2: "February", 3: "March", 4: "April",
@@ -35,12 +138,21 @@ days = {
     6: "Sunday"
 }
 
-st.divider()
+st.markdown("#### Compare conditions")
+st.caption("Keep the base scenario as your reference, then adjust the modified scenario to test a different environment.")
 
-colX, base_col, modified_col, colY = st.columns([0.3, 1, 1, 0.3])
+base_col, divider_col, modified_col = st.columns([1, 0.035, 1], gap="medium")
 
 with base_col:
-    st.subheader("Base Conditions")
+    st.markdown(
+        '<span class="scenario-label base">Base · reference</span>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<h5 class="scenario-heading base">Base conditions</h5>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Reference environment")
 
     base_temperature = st.slider(
         "Temperature (°C)",
@@ -99,8 +211,19 @@ with base_col:
         key="base_time"
     )
 
+with divider_col:
+    st.markdown('<div class="scenario-divider"></div>', unsafe_allow_html=True)
+
 with modified_col:
-    st.subheader("Modified Conditions")
+    st.markdown(
+        '<span class="scenario-label modified">Modified · test scenario</span>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<h5 class="scenario-heading modified">Modified conditions</h5>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Scenario to test")
 
     modified_temperature = st.slider(
         "Temperature (°C)",
@@ -159,7 +282,8 @@ with modified_col:
         key="modified_time"
     )
 
-st.divider()
+st.markdown("### Run simulation")
+st.caption(f"Comparing conditions for **{city}**.")
 
 
 def format_api_error(response, endpoint_name):
@@ -310,7 +434,7 @@ def predict_scenario(
 
 
 if st.button(
-    "Run Simulation",
+    "Run simulation",
     type="primary",
     use_container_width=True
 ):
@@ -367,8 +491,7 @@ if st.session_state.get("simulator_done", False):
     base = st.session_state["simulator_base"]
     modified = st.session_state["simulator_modified"]
 
-    st.divider()
-    st.header("Simulation Results")
+    st.markdown("### Simulation results")
     st.caption(f"City: {city}")
 
     def change_value(base_value, modified_value):
@@ -391,7 +514,7 @@ if st.session_state.get("simulator_done", False):
         modified["aqi"]
     )
 
-    st.subheader("Output Comparison")
+    st.markdown("#### Output comparison")
 
     comparison = pd.DataFrame({
         "Metric": [
@@ -432,7 +555,7 @@ if st.session_state.get("simulator_done", False):
         hide_index=True
     )
 
-    st.subheader("Impact on Air Quality")
+    st.markdown("#### Impact on air quality")
 
     col1, col2, col3 = st.columns(3)
 
@@ -457,8 +580,7 @@ if st.session_state.get("simulator_done", False):
             f"{aqi_change:+.0f} ({aqi_pct:+.1f}%)"
         )
 
-    st.divider()
-    st.subheader("Base vs Modified")
+    st.markdown("#### Base vs modified")
 
     chart = go.Figure()
 
@@ -498,13 +620,23 @@ if st.session_state.get("simulator_done", False):
         use_container_width=True
     )
 
-    st.divider()
-    st.header("SHAP Analysis")
+    st.markdown("### Explain the change")
+    st.caption("Compare which features influenced the base and modified predictions.")
 
-    shap_col1, shap_col2 = st.columns(2)
+    shap_col1, shap_divider_col, shap_col2 = st.columns(
+        [1, 0.035, 1],
+        gap="medium",
+    )
 
     with shap_col1:
-        st.subheader("Base Conditions")
+        st.markdown(
+            '<span class="scenario-label base">Base · reference</span>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<h4 class="scenario-heading base">Base conditions</h4>',
+            unsafe_allow_html=True,
+        )
 
         st.plotly_chart(
             base["fig_pm25"],
@@ -516,8 +648,18 @@ if st.session_state.get("simulator_done", False):
             use_container_width=True
         )
 
+    with shap_divider_col:
+        st.markdown('<div class="scenario-divider"></div>', unsafe_allow_html=True)
+
     with shap_col2:
-        st.subheader("Modified Conditions")
+        st.markdown(
+            '<span class="scenario-label modified">Modified · test scenario</span>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<h4 class="scenario-heading modified">Modified conditions</h4>',
+            unsafe_allow_html=True,
+        )
 
         st.plotly_chart(
             modified["fig_pm25"],

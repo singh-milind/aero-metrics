@@ -1,53 +1,117 @@
 import streamlit as st
 import requests
 import pandas as pd
+import numpy as np
+import pydeck as pdk
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from resources.city_info import city_info
 from resources.pm_to_aqi import calculate_aqi
 
+st.markdown(
+    """
+    <style>
+    .multiforecaster-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 API_BASE_URL = st.secrets["API_BASE_URL"]
 PM25_ENDPOINT = f"{API_BASE_URL}/api/forecast_pm25_auto"
 PM10_ENDPOINT = f"{API_BASE_URL}/api/forecast_pm10_auto"
 
-st.title("Multi City Forecaster")
-st.write("Compare PM2.5, PM10 and AQI forecasts across up to four cities.")
-st.divider()
+st.markdown('<p class="multiforecaster-kicker">Future conditions · multi city</p>', unsafe_allow_html=True)
+st.title("Compare air quality forecasts")
+st.write("Compare PM2.5, PM10, and AQI forecasts across up to four cities.")
 
-st.header("Forecast Inputs")
-st.caption("The target date and time is the starting point for the forecast. The model will generate forecasts for t, t+12h, t+24h, and t+48h horizons from this point.")
-st.caption("NOTE: Enter target time more than current time to get future forecasts.")
-st.caption("NOTE: You can enter target dates only till 2 more days in the future.")
-st.caption("OTHERWISE, API will return error. Please enter target date and time accordingly.")
-st.divider()
-col1, col2 = st.columns(2)
+st.markdown("### Forecast setup")
+st.caption("Choose the cities and starting point. Each selected city will be forecast at t, t+12h, t+24h, and t+48h.")
 
-with col1:
-    cities = sorted(city_info.keys())
-    selected_cities = st.multiselect(
-        "Select Cities",
-        cities,
-        max_selections=4,
-        placeholder="Select up to 4 cities",
-    )
+with st.container(border=True):
+    st.markdown("#### Cities and forecast target")
+    target_layout = st.columns([1.2, 1], gap="large")
 
-with col2:
-    target_date = st.date_input("Target Date")
-    target_time = st.time_input(
-        "Target Time",
-        step=timedelta(hours=6),
-    )
+    with target_layout[0]:
+        cities = sorted(city_info.keys())
+        selected_cities = st.multiselect(
+            "Select up to four cities",
+            cities,
+            max_selections=4,
+            placeholder="Select cities to compare",
+        )
+        if selected_cities:
+            selected_points = pd.DataFrame(
+                [
+                    {
+                        "city": selected_city,
+                        "region": city_info[selected_city]["region"],
+                        "latitude": city_info[selected_city]["lat"],
+                        "longitude": city_info[selected_city]["lon"],
+                    }
+                    for selected_city in selected_cities
+                ]
+            )
+            st.caption(f"{len(selected_cities)} of 4 cities selected")
+        else:
+            selected_points = pd.DataFrame(
+                columns=["city", "region", "latitude", "longitude"]
+            )
+            st.caption("Select at least one city to place it on the map.")
+        target_columns = st.columns(2, gap="medium")
+        with target_columns[0]:
+            target_date = st.date_input("Target Date")
+        with target_columns[1]:
+            target_time = st.time_input("Target Time", step=timedelta(hours=6))
+    with target_layout[1]:
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style=None,
+                initial_view_state=pdk.ViewState(
+                    latitude=np.mean(selected_points["latitude"]) if not selected_points.empty else 22.7,
+                    longitude=np.mean(selected_points["longitude"]) if not selected_points.empty else 79.2,
+                    zoom=3.7,
+                    min_zoom=3.2,
+                    max_zoom=7,
+                ),
+                layers=[
+                    pdk.Layer(
+                        "ScatterplotLayer",
+                        data=selected_points,
+                        get_position="[longitude, latitude]",
+                        get_radius=26000,
+                        get_fill_color=[56, 185, 255, 220],
+                        get_line_color=[242, 245, 247, 230],
+                        line_width_min_pixels=2,
+                        pickable=True,
+                    )
+                ],
+                tooltip={
+                    "html": "<b>{city}</b><br/>{region} region",
+                    "style": {"color": "#f2f5f7"},
+                },
+            ),
+            height=300,
+            use_container_width=True,
+        )
 
 target_datetime = datetime.combine(target_date, target_time)
 target_time_iso = target_datetime.isoformat()
 
-st.caption(
-    f"Forecast starting point: {target_datetime.strftime('%d %b %Y, %H:%M')}"
-)
+st.caption(f"Forecast starting point: {target_datetime.strftime('%d %b %Y, %H:%M')}")
+st.caption("Target dates can be entered up to two days ahead, and the target time should be later than the current time.")
 
-st.divider()
+st.markdown("### Ready to compare?")
+st.caption(f"{len(selected_cities)} selected {'city' if len(selected_cities) == 1 else 'cities'} · Four forecast horizons")
 
-if st.button("Generate Multi-City Forecast", type="primary", use_container_width=True):
+if st.button("Generate multi-city forecast", type="primary", use_container_width=True):
     if not selected_cities:
         st.warning("Please select at least one city.")
         st.stop()
@@ -168,13 +232,12 @@ if st.session_state.get("multicity_forecaster_done", False):
 
     df = pd.DataFrame(results)
 
-    st.divider()
-    st.header("Multi-City Forecast Results")
+    st.markdown("### Multi-city forecast results")
     st.caption(
         f"{' • '.join(forecast_cities)} • Starting {forecast_start.strftime('%d %b %Y, %H:%M')}"
     )
 
-    st.subheader("Forecast Summary")
+    st.markdown("#### Forecast summary")
 
     display_df = df[
         ["city", "horizon", "time", "pm25", "pm10", "aqi"]
@@ -210,9 +273,7 @@ if st.session_state.get("multicity_forecaster_done", False):
         hide_index=True,
     )
 
-    st.divider()
-
-    st.subheader("PM2.5 Comparison")
+    st.markdown("#### PM2.5 comparison")
 
     fig = go.Figure()
 
@@ -246,9 +307,7 @@ if st.session_state.get("multicity_forecaster_done", False):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.divider()
-
-    st.subheader("PM10 Comparison")
+    st.markdown("#### PM10 comparison")
 
     fig = go.Figure()
 
@@ -282,9 +341,7 @@ if st.session_state.get("multicity_forecaster_done", False):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.divider()
-
-    st.subheader("AQI Comparison")
+    st.markdown("#### AQI comparison")
 
     fig = go.Figure()
 
@@ -318,9 +375,7 @@ if st.session_state.get("multicity_forecaster_done", False):
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.divider()
-
-    st.subheader("Horizon-wise Comparison")
+    st.markdown("#### Horizon-wise comparison")
 
     horizon = st.selectbox(
         "Select Forecast Horizon",

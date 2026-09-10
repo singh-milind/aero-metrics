@@ -3,6 +3,22 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 
+st.markdown(
+    """
+    <style>
+    .metrics-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 API_BASE_URL = st.secrets["API_BASE_URL"]
 METRICS_ENDPOINT = f"{API_BASE_URL}/api/metrics/predcitor"
 
@@ -21,9 +37,9 @@ def get_metrics(model):
         raise RuntimeError(f"API Error {response.status_code}: {detail}")
     return response.json()
 
-st.title("Predictor Model Metrics")
-st.write("Performance, error, stability, and generalization metrics for the PM2.5 and PM10 prediction models.")
-st.divider()
+st.markdown('<p class="metrics-kicker">Model evaluation · predictor</p>', unsafe_allow_html=True)
+st.title("Predictor model metrics")
+st.write("Review performance, error, stability, and generalization for the PM2.5 and PM10 prediction models.")
 
 try:
     pm25 = get_metrics("pm25")
@@ -33,71 +49,59 @@ except Exception as e:
     st.stop()
 import streamlit as st
 
-st.title("🔄 Model Workflow")
-st.write("Model Used: XGBoost Regressor")
+with st.expander("How the predictor model works"):
+    st.write("Model used: XGBoost Regressor")
+    st.markdown("""
+    1. **PM2.5 model** predicts particulate concentration.
+    2. **Ratio model** estimates the PM10/PM2.5 relationship.
+    3. **Final PM10** is calculated as PM2.5 × ratio.
+    4. **AQI** is calculated using CPCB and WHO formulas.
+    """)
+    st.info("PM2.5 and ratio models are trained independently to avoid leakage.")
 
-st.markdown("""
-1.  **PM2.5 Model** predicts particulate concentration
-2.  **Ratio Model** estimates PM10/PM2.5 relationship
-3.  **Final PM10** = PM2.5 × Ratio
-4.  **AQI** calculated using CPCB & WHO formulas
-""")
+st.markdown("### Performance overview")
+st.caption("Training metrics show fit on known data; cross-validation metrics indicate how the models generalize.")
 
-st.info("""
-⚠️ **Model Design Note:** PM2.5 and Ratio models are trained independently to avoid leakage. The ratio model does NOT use predicted PM2.5 as an input feature.
-""")
-
-st.divider()
-
-st.header("Model Performance")
-st.divider()
-st.divider()
-st.markdown("### PM2.5")
-c1, c2 ,c3= st.columns(3)
-with c1:
+with st.container(border=True):
+    st.markdown("#### PM2.5 model")
+    c1, c2, c3 = st.columns(3)
+    with c1:
         st.metric("Train R²", f"{pm25['mean_train_r2']:.2f}")
-with c2:
+    with c2:
         st.metric("Train MAE", f"{pm25['mean_train_mae']:.2f}")
-with c3:
+    with c3:
         st.metric("Train RMSE", f"{pm25['mean_train_rmse']:.2f}")
-st.divider()
-
-c4, c5, c6 ,c7= st.columns(4)
-with c4:
+    c4, c5, c6, c7 = st.columns(4)
+    with c4:
         st.metric("CV R²", f"{pm25['mean_cv_r2']:.2f}")
-with c5:
+    with c5:
         st.metric("CV MAE", f"{pm25['mean_cv_mae']:.2f}")
-with c6:
+    with c6:
         st.metric("CV RMSE", f"{pm25['mean_cv_rmse']:.2f}")
-with c7:
+    with c7:
         st.metric("Generalization Gap", f"{pm25['generalization_gap']:.2f}")
 
-st.divider()
-st.divider()
-
-st.markdown("### PM10")
-c1, c2 ,c3= st.columns(3)
-with c1:
+with st.container(border=True):
+    st.markdown("#### PM10 model")
+    c1, c2, c3 = st.columns(3)
+    with c1:
         st.metric("Train R²", f"{pm10['mean_train_r2']:.2f}")
-with c2:
+    with c2:
         st.metric("Train MAE", f"{pm10['mean_train_mae']:.2f}")
-with c3:
+    with c3:
         st.metric("Train RMSE", f"{pm10['mean_train_rmse']:.2f}")
-st.divider()
-
-c4, c5, c6 ,c7= st.columns(4)
-with c4:
+    c4, c5, c6, c7 = st.columns(4)
+    with c4:
         st.metric("CV R²", f"{pm10['mean_cv_r2']:.2f}")
-with c5:
+    with c5:
         st.metric("CV MAE", f"{pm10['mean_cv_mae']:.2f}")
-with c6:
+    with c6:
         st.metric("CV RMSE", f"{pm10['mean_cv_rmse']:.2f}")
-with c7:
+    with c7:
         st.metric("Generalization Gap", f"{pm10['generalization_gap']:.2f}")
 
-st.divider()
-
-st.subheader("R² Comparison")
+st.markdown("### Model comparisons")
+st.caption("Higher R² is better. Lower MAE and RMSE indicate smaller prediction errors.")
 
 r2_df = pd.DataFrame({
     "Model": ["PM2.5", "PM10"],
@@ -105,33 +109,27 @@ r2_df = pd.DataFrame({
     "CV R²": [pm25["mean_cv_r2"], pm10["mean_cv_r2"]],
 })
 
-fig = go.Figure()
-fig.add_trace(go.Bar(
-    x=r2_df["Model"],
-    y=r2_df["Train R²"],
-    name="Train R²",
-    text=r2_df["Train R²"].round(4),
-    textposition="auto",
-))
-fig.add_trace(go.Bar(
-    x=r2_df["Model"],
-    y=r2_df["CV R²"],
-    name="CV R²",
-    text=r2_df["CV R²"].round(4),
-    textposition="auto",
-))
-fig.update_layout(
-    title="Train vs Cross-Validation R²",
-    yaxis_title="R² Score",
-    yaxis=dict(range=[0, 1]),
-    barmode="group",
-    height=450,
-)
-st.plotly_chart(fig, use_container_width=True)
-
-st.divider()
-
-st.subheader("Error Comparison")
+with st.container(border=True):
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=r2_df["Model"],
+        y=r2_df["Train R²"],
+        name="Train R²",
+    ))
+    fig.add_trace(go.Bar(
+        x=r2_df["Model"],
+        y=r2_df["CV R²"],
+        name="CV R²",
+    ))
+    fig.update_layout(
+        title="Train vs Cross-Validation R²",
+        yaxis_title="R² Score",
+        yaxis=dict(range=[0, 1]),
+        barmode="group",
+        height=450,
+    )
+    fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
+    st.plotly_chart(fig, use_container_width=True)
 
 error_df = pd.DataFrame({
     "Model": ["PM2.5", "PM10"],
@@ -144,60 +142,52 @@ error_df = pd.DataFrame({
 col1, col2 = st.columns(2)
 
 with col1:
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=["PM2.5", "PM10"],
-        y=error_df["Train MAE"],
-        name="Train MAE",
-        text=error_df["Train MAE"].round(4),
-        textposition="auto",
-    ))
-    fig.add_trace(go.Bar(
-        x=["PM2.5", "PM10"],
-        y=error_df["CV MAE"],
-        name="CV MAE",
-        text=error_df["CV MAE"].round(4),
-        textposition="auto",
-    ))
-    fig.update_layout(
-        title="Mean Absolute Error",
-        yaxis_title="MAE",
-        barmode="group",
-        height=400,
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with st.container(border=True):
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=["PM2.5", "PM10"],
+            y=error_df["Train MAE"],
+            name="Train MAE",
+        ))
+        fig.add_trace(go.Bar(
+            x=["PM2.5", "PM10"],
+            y=error_df["CV MAE"],
+            name="CV MAE",
+        ))
+        fig.update_layout(
+            title="Mean Absolute Error",
+            yaxis_title="MAE",
+            barmode="group",
+            height=400,
+        )
+        fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
+        st.plotly_chart(fig, use_container_width=True)
 
 with col2:
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=["PM2.5", "PM10"],
-        y=error_df["Train RMSE"],
-        name="Train RMSE",
-        text=error_df["Train RMSE"].round(4),
-        textposition="auto",
-    ))
-    fig.add_trace(go.Bar(
-        x=["PM2.5", "PM10"],
-        y=error_df["CV RMSE"],
-        name="CV RMSE",
-        text=error_df["CV RMSE"].round(4),
-        textposition="auto",
-    ))
-    fig.update_layout(
-        title="Root Mean Squared Error",
-        yaxis_title="RMSE",
-        barmode="group",
-        height=400,
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    with st.container(border=True):
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=["PM2.5", "PM10"],
+            y=error_df["Train RMSE"],
+            name="Train RMSE",
+        ))
+        fig.add_trace(go.Bar(
+            x=["PM2.5", "PM10"],
+            y=error_df["CV RMSE"],
+            name="CV RMSE",
+        ))
+        fig.update_layout(
+            title="Root Mean Squared Error",
+            yaxis_title="RMSE",
+            barmode="group",
+            height=400,
+        )
+        fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
+        st.plotly_chart(fig, use_container_width=True)
 
 
 
-st.divider()
-
-st.divider()
-
-st.subheader("Complete Metrics")
+st.markdown("### Complete metrics")
 
 comparison_df = pd.DataFrame({
     "Metric": [
@@ -252,12 +242,10 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
-st.header("Note")
-st.write("The metrics above are derived from cross-validation and training results. They provide insights into the model's performance, stability, and generalization capabilities. Lower standard deviations indicate more stable performance across different folds of cross-validation.")
-st.divider()
-st.header("Want to understand how this model works are calculated?")
+with st.expander("About these metrics"):
+    st.write("These metrics are derived from training results and cross-validation. Lower standard deviations indicate more stable performance across folds.")
 if st.button(
-        "How It Works — Predictor",
+        "Open predictor model workflow",
         use_container_width=True,
         type="secondary",
     ):

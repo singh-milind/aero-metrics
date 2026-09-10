@@ -1,11 +1,29 @@
 import streamlit as st
 import requests
 import pandas as pd
+import pydeck as pdk
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from resources.city_info import city_info
 from resources.pm_to_aqi import calculate_aqi
 from resources.plot_waterfall import plot_shap_waterfall
+
+st.markdown(
+    """
+    <style>
+    .forecaster-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 API_BASE_URL = st.secrets["API_BASE_URL"]
 PM25_AUTO_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/local/pm25/auto"
 PM10_AUTO_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/local/pm10/auto"
@@ -65,10 +83,12 @@ def get_ai_reasoning(target, horizon, shap_result):
             detail = response.text
         raise RuntimeError(f"AI Reasoning API Error {response.status_code}: {detail}")
     return response.json()
-st.title("Single City Forecaster")
-st.write("Generate PM2.5, PM10, and AQI Forecasts till 48h")
-st.caption("Be patient, 8 models are running behind the scenes to generate these forecasts. It may take a few seconds.")
-st.divider()
+st.markdown('<p class="forecaster-kicker">Future conditions · single city</p>', unsafe_allow_html=True)
+st.title("Forecast air quality")
+st.write("Generate PM2.5, PM10, and AQI forecasts for the current moment and the next 48 hours.")
+st.caption("Eight models run behind the scenes. Forecast generation may take a few seconds.")
+
+st.markdown("### Forecast setup")
 mode = st.radio(
     "Forecast Mode",
     ["Automatic", "Manual"],
@@ -76,118 +96,101 @@ mode = st.radio(
     help="Automatic mode uses weather and PM data from the backend. Manual mode lets you provide the input features."
 )
 
-st.divider()
-st.header("Forecast Inputs")
-st.caption("The target date and time is the starting point for the forecast. The model will generate forecasts for t, t+12h, t+24h, and t+48h horizons from this point.")
-st.caption("NOTE: Enter target time more than current time to get future forecasts.")
-st.caption("NOTE: You can enter target dates only till 2 more days in the future.")
-st.caption("OTHERWISE, API will return error. Please enter target date and time accordingly.")
-st.divider()
-col1, col2 = st.columns(2)
+with st.container(border=True):
+    st.markdown("#### Forecast target")
+    st.caption("Choose a city and starting point. The model will forecast t, t+12h, t+24h, and t+48h.")
+    target_layout = st.columns([1.7, 1], gap="large")
 
-with col1:
-    cities = sorted(city_info.keys())
-    city = st.selectbox("City", cities)
+    with target_layout[0]:
+        target_columns = st.columns(3, gap="medium")
 
-with col2:
-    target_date = st.date_input("Target Date")
-    target_time = st.time_input("Target Time", step=timedelta(hours=6))
-    
+        with target_columns[0]:
+            cities = sorted(city_info.keys())
+            city = st.selectbox("City", cities)
+
+        with target_columns[1]:
+            target_date = st.date_input("Target Date")
+
+        with target_columns[2]:
+            target_time = st.time_input("Target Time", step=timedelta(hours=6))
+
+    with target_layout[1]:
+        selected_city = city_info[city]
+        selected_city_point = pd.DataFrame(
+            [
+                {
+                    "city": city,
+                    "region": selected_city["region"],
+                    "latitude": selected_city["lat"],
+                    "longitude": selected_city["lon"],
+                }
+            ]
+        )
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style=None,
+                initial_view_state=pdk.ViewState(
+                    latitude=selected_city["lat"],
+                    longitude=selected_city["lon"],
+                    zoom=3.4,
+                    min_zoom=3.2,
+                    max_zoom=7,
+                ),
+                layers=[
+                    pdk.Layer(
+                        "ScatterplotLayer",
+                        data=selected_city_point,
+                        get_position="[longitude, latitude]",
+                        get_radius=26000,
+                        get_fill_color=[56, 185, 255, 220],
+                        get_line_color=[242, 245, 247, 230],
+                        line_width_min_pixels=2,
+                        pickable=True,
+                    )
+                ],
+                tooltip={
+                    "html": "<b>{city}</b><br/>{region} region",
+                    "style": {"color": "#f2f5f7"},
+                },
+            ),
+            height=220,
+            use_container_width=True,
+        )
+
 target_datetime = datetime.combine(target_date, target_time)
 target_time_iso = target_datetime.isoformat()
 
 st.caption(f"Forecast starting point: {target_datetime.strftime('%d %b %Y, %H:%M')}")
+st.caption("Target dates can be entered up to two days ahead, and the target time should be later than the current time.")
 
 if mode == "Manual":
-    st.divider()
-    st.subheader("Manual Weather Inputs")
-    st.caption("Enter the weather conditions and PM lag values that should be used for forecasting.")
+    st.markdown("#### Manual inputs")
+    st.caption("Provide the weather conditions and recent pollution values used by the manual forecasting models.")
+    manual_columns = st.columns(2, gap="medium")
 
-    col1, col2, col3 = st.columns(3)
+    with manual_columns[0]:
+        with st.container(border=True):
+            st.markdown("##### Weather conditions")
+            temperature_2m = st.number_input("Temperature (°C)", min_value=-10.0, max_value=50.0, value=25.0, step=0.5)
+            relative_humidity_2m = st.number_input("Relative Humidity (%)", min_value=0.0, max_value=100.0, value=60.0, step=1.0)
+            wind_speed_10m = st.number_input("Wind Speed (km/h)", min_value=0.0, max_value=20.0,value=10.0, step=0.2)
+            wind_direction_10m = st.number_input("Wind Direction (°)", min_value=0.0, max_value=360.0, value=180.0, step=1.0)
+            surface_pressure = st.number_input("Surface Pressure (hPa)", min_value=900,max_value=1050,value=1013.0, step=10.0)
+            precipitation = st.number_input("Precipitation(mm) in 6h", min_value=0.0, value=0.0, step=0.2,max_value=15.0)
 
-    with col1:
-        temperature_2m = st.number_input(
-            "Temperature (°C)",
-            value=25.0,
-            step=0.5,
-        )
-        relative_humidity_2m = st.number_input(
-            "Relative Humidity (%)",
-            min_value=0.0,
-            max_value=100.0,
-            value=60.0,
-            step=1.0,
-        )
-        wind_speed_10m = st.number_input(
-            "Wind Speed (km/h)",
-            min_value=0.0,
-            value=10.0,
-            step=0.2,
-        )
-
-    with col2:
-        wind_direction_10m = st.number_input(
-            "Wind Direction (°)",
-            min_value=0.0,
-            max_value=360.0,
-            value=180.0,
-            step=1.0,
-        )
-        surface_pressure = st.number_input(
-            "Surface Pressure (hPa)",
-            value=1013.0,
-            step=10.0,
-        )
-        precipitation = st.number_input(
-            "Precipitation (mm)",
-            min_value=0.0,
-            value=0.0,
-            step=0.2,
-        )
-
-    st.subheader("PM Lag Inputs")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        pm2_5_lag_12h = st.number_input(
-            "PM2.5 Lag 12h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
-        pm2_5_lag_24h = st.number_input(
-            "PM2.5 Lag 24h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
-        pm2_5_lag_48h = st.number_input(
-            "PM2.5 Lag 48h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
-
-    with col2:
-        pm10_lag_12h = st.number_input(
-            "PM10 Lag 12h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
-        pm10_lag_24h = st.number_input(
-            "PM10 Lag 24h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
-        pm10_lag_48h = st.number_input(
-            "PM10 Lag 48h",
-            min_value=0.0,
-            value=0.0,
-            step=5.0,
-        )
+    with manual_columns[1]:
+        with st.container(border=True):
+            st.markdown("##### Recent pollution lags")
+            st.caption("Use the latest observed values available before the forecast target.")
+            lag_columns = st.columns(2, gap="small")
+            with lag_columns[0]:
+                pm2_5_lag_12h = st.number_input("PM2.5 Lag 12h", min_value=0.0, value=0.0, step=5.0)
+                pm2_5_lag_24h = st.number_input("PM2.5 Lag 24h", min_value=0.0, value=0.0, step=5.0)
+                pm2_5_lag_48h = st.number_input("PM2.5 Lag 48h", min_value=0.0, value=0.0, step=5.0)
+            with lag_columns[1]:
+                pm10_lag_12h = st.number_input("PM10 Lag 12h", min_value=0.0, value=0.0, step=5.0)
+                pm10_lag_24h = st.number_input("PM10 Lag 24h", min_value=0.0, value=0.0, step=5.0)
+                pm10_lag_48h = st.number_input("PM10 Lag 48h", min_value=0.0, value=0.0, step=5.0)
 
     manual_payload = {
         "target_time": target_time_iso,
@@ -208,9 +211,10 @@ if mode == "Manual":
 else:
     manual_payload = None
 
-st.divider()
+st.markdown("### Ready to forecast?")
+st.caption(f"Forecast target: **{city}** · Mode: **{mode}**")
 
-if st.button("Generate Forecast", type="primary", use_container_width=True):
+if st.button("Generate 48-hour forecast", type="primary", use_container_width=True):
     horizons = ["t", "t12", "t24", "t48"]
     results = []
 
@@ -329,32 +333,52 @@ if st.session_state.get("forecaster_auto_done", False):
     forecast_start = st.session_state["forecaster_auto_target_time"]
     forecast_mode = st.session_state.get("forecaster_auto_mode", "Automatic")
 
-    st.divider()
-    st.header("Forecast Results")
+    st.markdown("### Forecast results")
     st.caption(
         f"{forecast_city} • {forecast_mode} Mode • Starting {forecast_start.strftime('%d %b %Y, %H:%M')}"
     )
 
     df = pd.DataFrame(results)
 
-    st.subheader("Forecast Timeline")
+    st.markdown("#### Forecast timeline")
 
     col1, col2, col3, col4 = st.columns(4)
+    horizon_labels = {
+        "t": "T",
+        "t12": "T+12",
+        "t24": "T+24",
+        "t48": "T+48",
+    }
 
     for col, result in zip([col1, col2, col3, col4], results):
         with col:
-            st.metric(
-                result["horizon"].upper(),
-                f"{result['pm25']:.2f} µg/m³",
-                help=f"Forecast time: {result['time'].strftime('%d %b %Y, %H:%M')}",
+            st.markdown(
+                f"""
+                <div style="
+                    border: 1px solid rgba(148, 163, 184, 0.22);
+                    border-radius: 18px;
+                    background: rgba(15, 23, 42, 0.42);
+                    min-height: 128px;
+                    padding: 18px 20px 14px;
+                ">
+                    <div style="color: #8294ad; font-size: 0.85rem; margin-bottom: 8px;">
+                        {horizon_labels.get(result["horizon"], result["horizon"].upper())}
+                    </div>
+                    <div style="color: #8294ad; font-size: 2.35rem; line-height: 1.1; font-weight: 500;">
+                        {result["aqi"]:.2f}
+                    </div>
+                    <div style="color: #53647c; font-size: 0.8rem; margin-top: 12px;">
+                        AQI · {result["time"].strftime("%d %b %H:%M")}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
-            st.caption(result["time"].strftime("%d %b %H:%M"))
 
-    st.divider()
-
-    st.subheader("Forecast Values")
+    st.markdown("#### Forecast values")
 
     display_df = df[["horizon", "time", "pm25", "pm10", "aqi"]].copy()
+    display_df["horizon"] = display_df["horizon"].map(horizon_labels)
     display_df.columns = ["Horizon", "Forecast Time", "PM2.5", "PM10", "AQI"]
     display_df["Forecast Time"] = display_df["Forecast Time"].dt.strftime(
         "%d %b %Y, %H:%M"
@@ -370,9 +394,7 @@ if st.session_state.get("forecaster_auto_done", False):
         hide_index=True,
     )
 
-    st.divider()
-
-    st.subheader("PM2.5 Forecast")
+    st.markdown("#### PM2.5 forecast")
 
     pm25_fig = go.Figure()
     pm25_fig.add_trace(
@@ -393,7 +415,7 @@ if st.session_state.get("forecaster_auto_done", False):
     )
     st.plotly_chart(pm25_fig, use_container_width=True)
 
-    st.subheader("PM10 Forecast")
+    st.markdown("#### PM10 forecast")
 
     pm10_fig = go.Figure()
     pm10_fig.add_trace(
@@ -414,7 +436,7 @@ if st.session_state.get("forecaster_auto_done", False):
     )
     st.plotly_chart(pm10_fig, use_container_width=True)
 
-    st.subheader("AQI Forecast")
+    st.markdown("#### AQI forecast")
 
     aqi_fig = go.Figure()
     aqi_fig.add_trace(
@@ -434,9 +456,8 @@ if st.session_state.get("forecaster_auto_done", False):
         hovermode="x unified",
     )
     st.plotly_chart(aqi_fig, use_container_width=True)
-    st.divider()
-    st.header("Local SHAP Analysis")
-    st.write("Understand which features contributed to each individual forecast.")
+    st.markdown("### Explain each forecast")
+    st.caption("Open a horizon to inspect the features that contributed to its PM2.5 and PM10 estimates.")
 
     horizon_tabs = st.tabs(["T", "T+12", "T+24", "T+48"])
 
@@ -457,7 +478,7 @@ if st.session_state.get("forecaster_auto_done", False):
                 )
 
                 if st.button(
-                    "🤖 Generate AI Reasoning",
+                    "Explain PM2.5 forecast",
                     key=f"pm25_reasoning_{horizon}",
                     use_container_width=True,
                 ):
@@ -475,7 +496,7 @@ if st.session_state.get("forecaster_auto_done", False):
                 reasoning = st.session_state.get(f"pm25_reasoning_{horizon}")
 
                 if reasoning:
-                    st.markdown("#### AI Reasoning")
+                    st.markdown("#### PM2.5 reasoning")
                     if isinstance(reasoning, dict):
                         st.info(
                             reasoning.get(
@@ -503,7 +524,7 @@ if st.session_state.get("forecaster_auto_done", False):
                 )
 
                 if st.button(
-                    "🤖 Generate AI Reasoning",
+                    "Explain PM10 forecast",
                     key=f"pm10_reasoning_{horizon}",
                     use_container_width=True,
                 ):
@@ -521,7 +542,7 @@ if st.session_state.get("forecaster_auto_done", False):
                 reasoning = st.session_state.get(f"pm10_reasoning_{horizon}")
 
                 if reasoning:
-                    st.markdown("#### AI Reasoning")
+                    st.markdown("#### PM10 reasoning")
                     if isinstance(reasoning, dict):
                         st.info(
                             reasoning.get(

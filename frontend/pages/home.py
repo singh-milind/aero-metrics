@@ -1,6 +1,48 @@
+import pandas as pd
+import pydeck as pdk
 import streamlit as st
 
 from resources.city_info import city_info
+
+
+st.markdown(
+    """
+    <style>
+    .st-key-home-hero-primary,
+    .st-key-home-hero-context {
+        min-height: 188px;
+    }
+
+    .st-key-home-workflow-predict,
+    .st-key-home-workflow-forecast,
+    .st-key-home-workflow-simulate,
+    .st-key-home-workflow-understand {
+        min-height: 310px;
+    }
+
+    .st-key-home-evidence-workflows,
+    .st-key-home-evidence-shap,
+    .st-key-home-evidence-metrics {
+        min-height: 220px;
+    }
+
+    @media (max-width: 768px) {
+        .st-key-home-hero-primary,
+        .st-key-home-hero-context,
+        .st-key-home-workflow-predict,
+        .st-key-home-workflow-forecast,
+        .st-key-home-workflow-simulate,
+        .st-key-home-workflow-understand,
+        .st-key-home-evidence-workflows,
+        .st-key-home-evidence-shap,
+        .st-key-home-evidence-metrics {
+            min-height: 0;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 def navigate(label, page, button_type="secondary"):
@@ -12,7 +54,7 @@ def navigate(label, page, button_type="secondary"):
 def section_heading(eyebrow, title, description):
     st.markdown(
         f"""
-        <div style="margin: 3.5rem 0 1.25rem;">
+        <div style="margin: 3rem 0 1.2rem;">
             <p style="margin: 0 0 0.45rem; color: #38b9ff; font-size: 0.72rem;
                       font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;">
                 {eyebrow}
@@ -27,155 +69,212 @@ def section_heading(eyebrow, title, description):
 
 st.markdown(
     """
-    <div style="padding: 2rem 0 1rem;">
+    <div style="padding: 2rem 0 1.25rem;">
         <p style="color: #38b9ff; font-size: 0.75rem; font-weight: 700;
                   letter-spacing: 0.2em; text-transform: uppercase; margin: 0 0 1rem;">
             Environmental intelligence platform
         </p>
         <h1 style="margin: 0 0 1rem;">AERO<br><span style="color: #38b9ff;">METRICS</span></h1>
-        <p style="max-width: 620px; margin: 0; color: #d7e6fb; font-size: 1.2rem;">
-            Clearer air-quality insights for a cleaner, smarter India.
+        <p style="max-width: 680px; margin: 0; color: #d7e6fb; font-size: 1.2rem;">
+            Understand air quality today, anticipate what comes next, and see the
+            environmental factors behind every result.
         </p>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-hero_actions, hero_context = st.columns([1.25, 1], gap="large")
+primary_col, context_col = st.columns([1.25, 1], gap="large")
 
-with hero_actions:
-    with st.container(border=True):
-        st.markdown("#### Start with an air-quality question")
+with primary_col:
+    with st.container(border=True, key="home-hero-primary"):
+        st.markdown("#### Start with a prediction")
         st.caption(
-            "Estimate current conditions, compare cities, or look ahead with a forecast."
+            "Use current environmental conditions to estimate PM2.5, PM10, and AQI."
         )
-        action_col1, action_col2 = st.columns(2, gap="small")
-        with action_col1:
-            navigate("Predict current air quality", "pages/predictor_single.py", "primary")
-        with action_col2:
-            navigate("Forecast future conditions", "pages/forecaster_single.py")
+        start_col, compare_col = st.columns(2, gap="small")
+        with start_col:
+            navigate("Predict one city", "pages/predictor_single.py", "primary")
+        with compare_col:
+            navigate("Compare cities", "pages/predictor_multi.py")
 
-with hero_context:
-    with st.container(border=True):
-        st.markdown("#### One platform, four lenses")
-        st.markdown(
-            """
-            <p style="margin: 0; line-height: 2;">
-                <strong style="color: #f2f5f7;">Predict</strong> what is happening now<br>
-                <strong style="color: #f2f5f7;">Forecast</strong> what comes next<br>
-                <strong style="color: #f2f5f7;">Simulate</strong> possible changes<br>
-                <strong style="color: #f2f5f7;">Understand</strong> the factors behind it
-            </p>
-            """,
-            unsafe_allow_html=True,
+with context_col:
+    with st.container(border=True, key="home-hero-context"):
+        st.markdown("#### Or look ahead")
+        st.caption(
+            "Generate forecasts at current, 12-hour, 24-hour, and 48-hour horizons."
         )
+        navigate("Open forecaster", "pages/forecaster_single.py", "primary")
 
 section_heading(
-    "Explore the platform",
-    "Choose the right lens for your analysis",
-    "Each workflow answers a different part of the air-quality question, from a quick estimate to model interpretation.",
+    "Platform overview",
+    "One question, one focused workflow",
+    "Choose the tool that matches the kind of answer you need. Every module uses the same environmental context and AQI calculation pipeline.",
 )
 
-capabilities = [
+workflow_columns = st.columns(2, gap="medium")
+workflows = [
     (
-        "Predictor",
-        "Estimate current conditions from environmental and contextual data.",
+        "01",
+        "Predict",
+        "Estimate current pollution levels for one city or compare up to four cities.",
         "Single city",
         "pages/predictor_single.py",
-        "Compare cities",
+        "Multi city",
         "pages/predictor_multi.py",
     ),
     (
-        "Forecaster",
-        "Look ahead using recent pollution history and meteorological conditions.",
+        "02",
+        "Forecast",
+        "Project PM2.5, PM10, and AQI across four future horizons.",
         "Single city",
         "pages/forecaster_single.py",
-        "Compare cities",
+        "Multi city",
         "pages/forecaster_multi.py",
     ),
     (
-        "Simulator",
-        "Change environmental inputs and observe how the predicted result responds.",
-        "Open simulator",
+        "03",
+        "Simulate",
+        "Change weather and temporal inputs to compare two possible conditions.",
+        "Run a simulation",
         "pages/simulator.py",
         None,
         None,
     ),
     (
+        "04",
         "Understand",
-        "Inspect feature influence, training patterns, and model performance.",
-        "SHAP analysis",
-        "pages/shap_predictor.py",
-        "Data analytics",
+        "Inspect data patterns, feature influence, and model performance.",
+        "Explore analytics",
         "pages/analytics.py",
+        "View explanations",
+        "pages/shap_predictor.py",
     ),
 ]
 
-capability_columns = st.columns(4, gap="medium")
-for column, capability in zip(capability_columns, capabilities):
-    title, description, primary_label, primary_page, secondary_label, secondary_page = capability
+workflow_keys = [
+    "home-workflow-predict",
+    "home-workflow-forecast",
+    "home-workflow-simulate",
+    "home-workflow-understand",
+]
+
+for index, workflow in enumerate(workflows):
+    number, title, description, primary_label, primary_page, secondary_label, secondary_page = workflow
+    column = workflow_columns[index % 2]
     with column:
-        with st.container(border=True):
+        with st.container(border=True, key=workflow_keys[index]):
+            st.caption(number)
             st.markdown(f"#### {title}")
             st.caption(description)
-            navigate(primary_label, primary_page, "primary" if title in {"Predictor", "Forecaster"} else "secondary")
-            if secondary_page:
+            navigate(primary_label, primary_page, "primary" if title in {"Predict", "Forecast"} else "secondary")
+            if title == "Understand":
+                with st.expander("View explanations"):
+                    st.caption(
+                        "Choose an explanation view for predictor or forecaster outputs."
+                    )
+                    navigate("Predictor SHAP", "pages/shap_predictor.py")
+                    navigate("Forecaster SHAP", "pages/shap_forecaster.py")
+            elif secondary_page:
                 navigate(secondary_label, secondary_page)
 
 section_heading(
     "Coverage",
-    "Air-quality context across Indian cities",
-    "Browse the cities currently supported by the platform, organized by region.",
+    "A live view of the supported cities",
+    f"Explore the {len(city_info)} Indian cities currently available for prediction, forecasting, and simulation.",
+)
+
+city_points = pd.DataFrame(
+    [
+        {
+            "city": city,
+            "region": info["region"],
+            "latitude": info["lat"],
+            "longitude": info["lon"],
+        }
+        for city, info in city_info.items()
+    ]
+)
+
+city_layer = pdk.Layer(
+    "ScatterplotLayer",
+    data=city_points,
+    get_position="[longitude, latitude]",
+    get_radius=18000,
+    get_fill_color=[56, 185, 255, 190],
+    get_line_color=[242, 245, 247, 220],
+    line_width_min_pixels=1,
+    pickable=True,
+)
+
+city_view = pdk.ViewState(
+    latitude=22.7,
+    longitude=79.2,
+    zoom=3.7,
+    min_zoom=3.2,
+    max_zoom=7,
+)
+
+st.pydeck_chart(
+    pdk.Deck(
+        map_style=None,
+        initial_view_state=city_view,
+        layers=[city_layer],
+        tooltip={"html": "<b>{city}</b><br/>{region} region", "style": {"color": "#f2f5f7"}},
+    ),
+    use_container_width=True,
 )
 
 region_cities = {}
 for city, info in city_info.items():
     region_cities.setdefault(info["region"], []).append(city)
 
-region_columns = st.columns(3, gap="medium")
-for index, (region, cities) in enumerate(sorted(region_cities.items())):
-    with region_columns[index % 3]:
-        with st.expander(f"{region}  ·  {len(cities)} cities"):
-            st.write(" · ".join(sorted(cities)))
+with st.expander("Browse cities by region", expanded=True):
+    region_columns = st.columns(3, gap="medium")
+    for index, (region, cities) in enumerate(sorted(region_cities.items())):
+        with region_columns[index % 3]:
+            st.markdown(f"**{region} · {len(cities)}**")
+            st.caption(" · ".join(sorted(cities)))
 
 section_heading(
-    "How it works",
-    "From environmental inputs to insight",
-    "Follow the model workflow to see how data becomes a prediction and how that prediction can be interpreted.",
+    "Validation",
+    "Validate the results you use",
+    "Trace how the models work and review their performance before relying on an estimate or forecast.",
 )
 
-workflow_columns = st.columns(2, gap="large")
-with workflow_columns[0]:
-    with st.container(border=True):
-        st.markdown("#### Predictor workflow")
-        st.caption("See how current air-quality estimates are produced from input features.")
-        navigate("View predictor workflow", "pages/working_predictor.py")
-
-with workflow_columns[1]:
-    with st.container(border=True):
-        st.markdown("#### Forecaster workflow")
-        st.caption("See how recent history and weather information shape future estimates.")
-        navigate("View forecaster workflow", "pages/working_forecaster.py")
-
-section_heading(
-    "Go deeper",
-    "Inspect the evidence behind the models",
-    "Move from a result to the data, feature contributions, and performance metrics behind it.",
-)
-
-deep_dive_columns = st.columns(3, gap="medium")
-deep_dive_items = [
-    ("Training data", "Explore distributions, trends, and relationships.", "Explore analytics", "pages/analytics.py"),
-    ("Model explanations", "See which features influence each prediction.", "Open SHAP analysis", "pages/shap_predictor.py"),
-    ("Model metrics", "Compare prediction and forecasting performance.", "View metrics", "pages/metrics_predictor.py"),
+evidence_columns = st.columns(2, gap="medium")
+evidence = [
+    (
+        "Model workflows",
+        "Follow the current prediction pipeline from features to AQI.",
+        "Predictor workflow",
+        "pages/working_predictor.py",
+        "Forecaster workflow",
+        "pages/working_forecaster.py",
+    ),
+    (
+        "Model performance",
+        "Review training, cross-validation, error, and generalization metrics.",
+        "Predictor metrics",
+        "pages/metrics_predictor.py",
+        "Forecaster metrics",
+        "pages/metrics_forecaster.py",
+    ),
+]
+evidence_keys = [
+    "home-evidence-workflows",
+    "home-evidence-metrics",
 ]
 
-for column, (title, description, label, page) in zip(deep_dive_columns, deep_dive_items):
+for index, item in enumerate(evidence):
+    title, description, primary_label, primary_page, secondary_label, secondary_page = item
+    column = evidence_columns[index % 2]
     with column:
-        with st.container(border=True):
+        with st.container(border=True, key=evidence_keys[index]):
             st.markdown(f"#### {title}")
             st.caption(description)
-            navigate(label, page)
+            navigate(primary_label, primary_page)
+            navigate(secondary_label, secondary_page)
 
 st.divider()
 

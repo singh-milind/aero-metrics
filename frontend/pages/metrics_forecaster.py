@@ -3,6 +3,22 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 
+st.markdown(
+    """
+    <style>
+    .metrics-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 API_BASE_URL = st.secrets["API_BASE_URL"]
 METRICS_ENDPOINT = f"{API_BASE_URL}/api/metrics/forecaster"
 
@@ -23,9 +39,9 @@ def get_metrics(model, horizon):
         raise RuntimeError(f"API Error {response.status_code}: {detail}")
     return response.json()
 
-st.title("Forecaster Model Metrics")
-st.write("Performance, error, stability, and generalization metrics across PM2.5 and PM10 forecasting horizons.")
-st.divider()
+st.markdown('<p class="metrics-kicker">Model evaluation · forecaster</p>', unsafe_allow_html=True)
+st.title("Forecaster model metrics")
+st.write("Compare performance, error, stability, and generalization across PM2.5 and PM10 forecast horizons.")
 
 try:
     metrics = {
@@ -36,8 +52,8 @@ except Exception as e:
     st.error(str(e))
     st.stop()
 
-st.header("PM2.5 Forecaster")
-st.divider()
+st.markdown("### PM2.5 forecaster")
+st.caption("Performance across the t, t+12, t+24, and t+48 forecast horizons.")
 
 pm25_df = pd.DataFrame([
     {
@@ -53,24 +69,21 @@ pm25_df = pd.DataFrame([
     for h in HORIZONS
 ])
 
-st.dataframe(pm25_df.round(4), use_container_width=True, hide_index=True)
+with st.container(border=True):
+    st.dataframe(pm25_df.round(4), use_container_width=True, hide_index=True)
 
-st.subheader("PM2.5 R² Across Horizons")
+st.markdown("#### PM2.5 R² across horizons")
 
 fig = go.Figure()
 fig.add_trace(go.Bar(
     x=pm25_df["Horizon"],
     y=pm25_df["Train R²"],
     name="Train R²",
-    text=pm25_df["Train R²"].round(4),
-    textposition="auto",
 ))
 fig.add_trace(go.Bar(
     x=pm25_df["Horizon"],
     y=pm25_df["CV R²"],
     name="CV R²",
-    text=pm25_df["CV R²"].round(4),
-    textposition="auto",
 ))
 fig.update_layout(
     title="PM2.5 Train vs Cross-Validation R²",
@@ -80,9 +93,10 @@ fig.update_layout(
     barmode="group",
     height=450,
 )
+fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("PM2.5 Error Across Horizons")
+st.markdown("#### PM2.5 errors across horizons")
 
 col1, col2 = st.columns(2)
 
@@ -92,15 +106,11 @@ with col1:
         x=pm25_df["Horizon"],
         y=pm25_df["Train MAE"],
         name="Train MAE",
-        text=pm25_df["Train MAE"].round(4),
-        textposition="auto",
     ))
     fig.add_trace(go.Bar(
         x=pm25_df["Horizon"],
         y=pm25_df["CV MAE"],
         name="CV MAE",
-        text=pm25_df["CV MAE"].round(4),
-        textposition="auto",
     ))
     fig.update_layout(
         title="PM2.5 MAE",
@@ -109,6 +119,7 @@ with col1:
         barmode="group",
         height=400,
     )
+    fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
@@ -117,15 +128,11 @@ with col2:
         x=pm25_df["Horizon"],
         y=pm25_df["Train RMSE"],
         name="Train RMSE",
-        text=pm25_df["Train RMSE"].round(4),
-        textposition="auto",
     ))
     fig.add_trace(go.Bar(
         x=pm25_df["Horizon"],
         y=pm25_df["CV RMSE"],
         name="CV RMSE",
-        text=pm25_df["CV RMSE"].round(4),
-        textposition="auto",
     ))
     fig.update_layout(
         title="PM2.5 RMSE",
@@ -134,11 +141,11 @@ with col2:
         barmode="group",
         height=400,
     )
+    fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
     st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-st.header("PM10 Forecaster")
-st.divider()
+st.markdown("### PM10 forecaster")
+st.caption("Performance across the t, t+12, t+24, and t+48 forecast horizons.")
 
 pm10_df = pd.DataFrame([
     {
@@ -154,24 +161,21 @@ pm10_df = pd.DataFrame([
     for h in HORIZONS
 ])
 
-st.dataframe(pm10_df.round(4), use_container_width=True, hide_index=True)
+with st.container(border=True):
+    st.dataframe(pm10_df.round(4), use_container_width=True, hide_index=True)
 
-st.subheader("PM10 R² Across Horizons")
+st.markdown("#### PM10 R² across horizons")
 
 fig = go.Figure()
 fig.add_trace(go.Bar(
     x=pm10_df["Horizon"],
     y=pm10_df["Train R²"],
     name="Train R²",
-    text=pm10_df["Train R²"].round(4),
-    textposition="auto",
 ))
 fig.add_trace(go.Bar(
     x=pm10_df["Horizon"],
     y=pm10_df["CV R²"],
     name="CV R²",
-    text=pm10_df["CV R²"].round(4),
-    textposition="auto",
 ))
 fig.update_layout(
     title="PM10 Train vs Cross-Validation R²",
@@ -181,9 +185,10 @@ fig.update_layout(
     barmode="group",
     height=450,
 )
+fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("PM10 Error Across Horizons")
+st.markdown("#### PM10 errors across horizons")
 
 col1, col2 = st.columns(2)
 
@@ -193,15 +198,11 @@ with col1:
         x=pm10_df["Horizon"],
         y=pm10_df["Train MAE"],
         name="Train MAE",
-        text=pm10_df["Train MAE"].round(4),
-        textposition="auto",
     ))
     fig.add_trace(go.Bar(
         x=pm10_df["Horizon"],
         y=pm10_df["CV MAE"],
         name="CV MAE",
-        text=pm10_df["CV MAE"].round(4),
-        textposition="auto",
     ))
     fig.update_layout(
         title="PM10 MAE",
@@ -210,6 +211,7 @@ with col1:
         barmode="group",
         height=400,
     )
+    fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
     st.plotly_chart(fig, use_container_width=True)
 
 with col2:
@@ -218,15 +220,11 @@ with col2:
         x=pm10_df["Horizon"],
         y=pm10_df["Train RMSE"],
         name="Train RMSE",
-        text=pm10_df["Train RMSE"].round(4),
-        textposition="auto",
     ))
     fig.add_trace(go.Bar(
         x=pm10_df["Horizon"],
         y=pm10_df["CV RMSE"],
         name="CV RMSE",
-        text=pm10_df["CV RMSE"].round(4),
-        textposition="auto",
     ))
     fig.update_layout(
         title="PM10 RMSE",
@@ -235,10 +233,10 @@ with col2:
         barmode="group",
         height=400,
     )
+    fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
     st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-st.header("Generalization Gap")
+st.markdown("### Generalization gap")
 st.write("Lower generalization gap indicates a smaller difference between training and cross-validation performance.")
 
 gap_df = pd.DataFrame({
@@ -252,15 +250,11 @@ fig.add_trace(go.Bar(
     x=gap_df["Horizon"],
     y=gap_df["PM2.5 Gap"],
     name="PM2.5",
-    text=gap_df["PM2.5 Gap"].round(4),
-    textposition="auto",
 ))
 fig.add_trace(go.Bar(
     x=gap_df["Horizon"],
     y=gap_df["PM10 Gap"],
     name="PM10",
-    text=gap_df["PM10 Gap"].round(4),
-    textposition="auto",
 ))
 fig.update_layout(
     title="Generalization Gap Across Forecast Horizons",
@@ -269,10 +263,10 @@ fig.update_layout(
     barmode="group",
     height=450,
 )
+fig.update_traces(texttemplate="%{y:.3f}", textposition="auto")
 st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-st.header("Cross-Validation Stability")
+st.markdown("### Cross-validation stability")
 
 stability_df = pd.DataFrame([
     {
@@ -294,14 +288,10 @@ stability_df = pd.DataFrame([
     for h in HORIZONS
 ])
 
-st.dataframe(
-    stability_df.round(4),
-    use_container_width=True,
-    hide_index=True,
-)
+with st.container(border=True):
+    st.dataframe(stability_df.round(4), use_container_width=True, hide_index=True)
 
-st.divider()
-st.header("Complete Metrics")
+st.markdown("### Complete metrics")
 
 complete_df = pd.DataFrame([
     {
@@ -319,17 +309,12 @@ complete_df = pd.DataFrame([
     for h in HORIZONS
 ])
 
-st.dataframe(
-    complete_df.round(4),
-    use_container_width=True,
-    hide_index=True,
-)
-st.header("Note")
-st.write("The metrics above are derived from cross-validation and training results. They provide insights into the model's performance, stability, and generalization capabilities. Lower standard deviations indicate more stable performance across different folds of cross-validation.")
-st.divider()
-st.header("Want to understand how this model works are calculated?")
+with st.container(border=True):
+    st.dataframe(complete_df.round(4), use_container_width=True, hide_index=True)
+with st.expander("About these metrics"):
+    st.write("These metrics are derived from training results and cross-validation. Lower standard deviations indicate more stable performance across folds.")
 if st.button(
-        "How It Works — Forecaster",
+        "Open forecaster model workflow",
         use_container_width=True,
         type="secondary",
     ):

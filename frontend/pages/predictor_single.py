@@ -1,9 +1,37 @@
 import streamlit as st
 import requests
+import pandas as pd
+import pydeck as pdk
+import re
 
 from resources.city_info import city_info
 from resources.pm_to_aqi import calculate_aqi
 from resources.plot_waterfall import plot_shap_waterfall
+
+st.markdown(
+    """
+    <style>
+    .st-key-predictor-city,
+    .st-key-predictor-x,
+    .st-key-predictor-y,
+    .st-key-predictor-z,
+    .st-key-predictor-results {
+        min-height: 100%;
+    }
+
+    .predictor-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Configuration
 
 API_BASE_URL = st.secrets["API_BASE_URL"]
@@ -14,168 +42,146 @@ EXPLAINER_PM10_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/pm10"
 REASONING_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/local/reasoning"
 
 
+def reasoning_text(result):
+    if isinstance(result, dict):
+        for key in ("reasoning", "explanation", "response", "text"):
+            value = result.get(key)
+            if isinstance(value, str):
+                result = value
+                break
+        else:
+            result = str(result)
+
+    text = str(result).replace("\r\n", "\n").strip()
+    if "\n" not in text:
+        sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
+        text = "\n\n".join(
+            " ".join(sentences[index:index + 3])
+            for index in range(0, len(sentences), 3)
+        )
+    return text
+
+
 # Page
 
-st.title("Single City Predictor")
+st.markdown('<p class="predictor-kicker">Current conditions · single city</p>', unsafe_allow_html=True)
+st.title("Predict air quality")
 
 st.write(
     """
-    Predict the PM2.5 concentration for a single city using current
-    environmental and contextual conditions.
+    Estimate PM2.5, PM10, and AQI for one city using environmental and
+    contextual conditions.
     """
 )
 
-st.divider()
-
-
 # Input Section
+st.markdown("### Prediction setup")
+st.caption("Set the location, environmental conditions, and time context used by the model.")
 
-st.header("Prediction Inputs")
+with st.container(border=True, key="predictor-city"):
+   st.markdown("#### City")
+   city_layout = st.columns([1, 1], gap="large")
 
-colA, colB, colC, colD = st.columns([0.5, 1, 1, 0.5])
+   with city_layout[0]:
+       cities = sorted(city_info.keys())
+       city = st.selectbox("Select a city", cities, label_visibility="collapsed")
 
-with colB:
+   with city_layout[1]:
+       selected_city = city_info[city]
+       selected_city_point = pd.DataFrame(
+           [
+               {
+                   "city": city,
+                   "region": selected_city["region"],
+                   "latitude": selected_city["lat"],
+                   "longitude": selected_city["lon"],
+               }
+           ]
+       )
+       st.pydeck_chart(
+           pdk.Deck(
+               map_style=None,
+               initial_view_state=pdk.ViewState(
+                   latitude=selected_city["lat"],
+                   longitude=selected_city["lon"],
+                   zoom=3.4,
+                   min_zoom=3.2,
+                   max_zoom=7,
+               ),
+               layers=[
+                   pdk.Layer(
+                       "ScatterplotLayer",
+                       data=selected_city_point,
+                       get_position="[longitude, latitude]",
+                       get_radius=26000,
+                       get_fill_color=[56, 185, 255, 220],
+                       get_line_color=[242, 245, 247, 230],
+                       line_width_min_pixels=2,
+                       pickable=True,
+                   )
+               ],
+               tooltip={
+                   "html": "<b>{city}</b><br/>{region} region",
+                   "style": {"color": "#f2f5f7"},
+               },
+           ),
+           height=220,
+           use_container_width=True,
+       )
 
-    # City
+input_columns = st.columns(3, gap="medium")
 
-    cities = sorted(city_info.keys())
+with input_columns[0]:
+   with st.container(border=True, key="predictor-x"):
+       st.markdown("#### · Atmosphere")
+       temperature = st.slider("Temperature (°C)", -10.0, 50.0, 25.0, 0.5)
+       humidity = st.slider("Relative Humidity (%)", 0, 100, 60, 1)
+       surface_pressure = st.slider("Surface Pressure (hPa)", 900.0, 1050.0, 1000.0, 5.0)
 
-    city = st.selectbox(
-        "City",
-        cities,
-    )
+with input_columns[1]:
+   with st.container(border=True, key="predictor-y"):
+       st.markdown("#### · Wind and rain")
+       wind_speed = st.slider("Wind Speed (m/s)", 0.0, 20.0, 5.0, 0.5)
+       wind_direction = st.slider(
+           "Wind Direction (°)",
+           0,
+           360,
+           180,
+           1,
+           help="0° = North, 90° = East, 180° = South, 270° = West",
+       )
+       precipitation = st.slider("Precipitation(mm) in 6h", 0.0, 15.0, 0.0, 0.2)
 
-    # Temperature
+with input_columns[2]:
+   with st.container(border=True, key="predictor-z"):
+       st.markdown("#### · Time context")
+       month_names = {
+           1: "January", 2: "February", 3: "March", 4: "April",
+           5: "May", 6: "June", 7: "July", 8: "August",
+           9: "September", 10: "October", 11: "November", 12: "December",
+       }
+       month_name = st.selectbox("Month", list(month_names.values()))
+       month = list(month_names.keys())[list(month_names.values()).index(month_name)]
 
-    temperature = st.slider(
-        "Temperature (°C)",
-        min_value=-10.0,
-        max_value=50.0,
-        value=25.0,
-        step=0.5,
-    )
+       days = {
+           0: "Monday", 1: "Tuesday", 2: "Wednesday", 3: "Thursday",
+           4: "Friday", 5: "Saturday", 6: "Sunday",
+       }
+       day_name = st.selectbox("Day of Week", list(days.values()))
+       day_of_week = list(days.keys())[list(days.values()).index(day_name)]
+       time_of_day = st.selectbox(
+           "Time of Day",
+           ["Morning", "Afternoon", "Evening", "Midnight"],
+       )
 
-    # Humidity
+st.caption("The model combines these inputs to estimate particulate concentration and the resulting AQI.")
 
-    humidity = st.slider(
-        "Relative Humidity (%)",
-        min_value=0,
-        max_value=100,
-        value=60,
-        step=1,
-    )
-
-    # Wind Speed
-
-    wind_speed = st.slider(
-        "Wind Speed (m/s)",
-        min_value=0.0,
-        max_value=20.0,
-        value=5.0,
-        step=0.5,
-    )
-
-    # Wind Direction
-
-    wind_direction = st.slider(
-        "Wind Direction (°)",
-        min_value=0,
-        max_value=360,
-        value=180,
-        step=1,
-        help="0° = North, 90° = East, 180° = South, 270° = West",
-    )
-
-
-
-with colC:
-
-    # Surface Pressure
-
-    surface_pressure = st.slider(
-        "Surface Pressure (hPa)",
-        min_value=900.0,
-        max_value=1050.0,
-        value=1000.0,
-        step=5.0,
-    )
-
-    # Precipitation
-
-    precipitation = st.slider(
-        "Precipitation (mm)",
-        min_value=0.0,
-        max_value=15.0,
-        value=0.0,
-        step=0.2,
-    )
-
-    # Month
-
-    month_names = {
-        1: "January",
-        2: "February",
-        3: "March",
-        4: "April",
-        5: "May",
-        6: "June",
-        7: "July",
-        8: "August",
-        9: "September",
-        10: "October",
-        11: "November",
-        12: "December",
-    }
-
-    month_name = st.selectbox(
-        "Month",
-        options=list(month_names.values()),
-    )
-
-    month = list(month_names.keys())[
-        list(month_names.values()).index(month_name)
-    ]
-
-    # Day of Week
-
-    days = {
-        0: "Monday",
-        1: "Tuesday",
-        2: "Wednesday",
-        3: "Thursday",
-        4: "Friday",
-        5: "Saturday",
-        6: "Sunday",
-    }
-
-    day_name = st.selectbox(
-        "Day of Week",
-        options=list(days.values()),
-    )
-
-    day_of_week = list(days.keys())[
-        list(days.values()).index(day_name)
-    ]
-
-    # Time of Day
-
-    time_of_day = st.selectbox(
-        "Time of Day",
-        [
-            "Morning",
-            "Afternoon",
-            "Evening",
-            "Midnight",
-        ],
-    )
-
-
-st.divider()
-
+st.markdown("### Ready to estimate?")
+st.caption(f"Prediction target: **{city}**")
 
 # Prediction
 # Prediction
-if st.button("Predict AQI", type="primary", use_container_width=True):
+if st.button("Generate air-quality prediction", type="primary", use_container_width=True):
     payload = {
         "temperature_2m": temperature,
         "relative_humidity_2m": humidity,
@@ -270,8 +276,8 @@ if st.button("Predict AQI", type="primary", use_container_width=True):
 # Display results
 if st.session_state.get("prediction_done", False):
     st.success("Prediction generated successfully.")
-    st.divider()
-    st.subheader("Prediction Results")
+    st.markdown("### Prediction summary")
+    st.caption("Estimated pollutant concentrations and AQI for the selected conditions.")
 
     pm25 = st.session_state["pm25"]
     pm10 = st.session_state["pm10"]
@@ -297,7 +303,10 @@ if st.session_state.get("prediction_done", False):
             value=f"{round(aqi)}",
         )
 
-    st.divider()
+    st.markdown("### Explain this prediction")
+    st.caption(
+        "Waterfall charts show how each input moved the estimate away from the model baseline."
+    )
 
     # SHAP Analysis
     fig_pm25 = st.session_state["fig_pm25"]
@@ -316,7 +325,7 @@ if st.session_state.get("prediction_done", False):
         )
 
         if st.button(
-            "Get AI Reasoning",
+            "Explain PM2.5 result",
             key="pm25_reasoning_button",
             use_container_width=True,
         ):
@@ -343,8 +352,10 @@ if st.session_state.get("prediction_done", False):
                     st.error(f"AI reasoning request failed: {e}")
 
         if "pm25_reasoning_result" in st.session_state:
-            st.markdown("### AI Reasoning")
-            st.write(st.session_state["pm25_reasoning_result"])
+            with st.container(border=True):
+                st.markdown("### PM2.5 reasoning")
+                st.caption("How the model arrived at this estimate.")
+                st.markdown(reasoning_text(st.session_state["pm25_reasoning_result"]))
 
     # PM10
     with col5:
@@ -355,7 +366,7 @@ if st.session_state.get("prediction_done", False):
         )
 
         if st.button(
-            "Get AI Reasoning",
+            "Explain PM10 result",
             key="pm10_reasoning_button",
             use_container_width=True,
         ):
@@ -383,5 +394,7 @@ if st.session_state.get("prediction_done", False):
                     st.error(f"AI reasoning request failed: {e}")
 
         if "pm10_reasoning_result" in st.session_state:
-            st.markdown("### AI Reasoning")
-            st.write(st.session_state["pm10_reasoning_result"])
+            with st.container(border=True):
+                st.markdown("### PM10 reasoning")
+                st.caption("How the model arrived at this estimate.")
+                st.markdown(reasoning_text(st.session_state["pm10_reasoning_result"]))

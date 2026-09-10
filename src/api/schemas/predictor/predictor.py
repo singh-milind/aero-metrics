@@ -13,11 +13,11 @@ class PredictorInput(BaseModel):
     """
     Input schema for the predictor API.
     """
-    temperature_2m: Annotated[float, Field(...,gt=-11,lt=50, description="Temperature in °C")]
-    relative_humidity_2m: Annotated[float, Field(...,gt=-1,lt=100, description="Relative humidity in %")]
-    wind_speed_10m: Annotated[float, Field(...,gt=-1,lt=20, description="Wind speed in m/s")]
-    wind_direction_10m: Annotated[float, Field(...,ge=-1,lt=360, description="Wind direction in degrees")]
-    surface_pressure: Annotated[float, Field(...,gt=900,lt=1050, description="Atmospheric pressure in hPa")]
+    temperature_2m: Annotated[float, Field(...,gt=-11,le=50, description="Temperature in °C")]
+    relative_humidity_2m: Annotated[float, Field(...,gt=-1,le=100, description="Relative humidity in %")]
+    wind_speed_10m: Annotated[float, Field(...,gt=-1,le=20, description="Wind speed in m/s")]
+    wind_direction_10m: Annotated[float, Field(...,ge=-1,le=360, description="Wind direction in degrees")]
+    surface_pressure: Annotated[float, Field(...,gt=900,le=1050, description="Atmospheric pressure in hPa")]
     precipitation: Annotated[float, Field(...,gt=-1,le=15, description="Precipitation in mm")]
     month: Annotated[int, Field(...,ge=1,le=12, description="Month of the year (1-12)")]
     day_of_week: Annotated[int, Field(...,ge=-1,le=6, description="Day of the week (0=Monday, 6=Sunday)")]

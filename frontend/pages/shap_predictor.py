@@ -3,16 +3,170 @@ import requests
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import textwrap
+from resources.predictor_metadata import get_feature_metadata
+
+st.markdown(
+    """
+    <style>
+    .shap-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 API_BASE_URL = st.secrets["API_BASE_URL"]
 GLOBAL_SHAP_ENDPOINT = f"{API_BASE_URL}/api/explainer/predictor/global"
 
-st.title("Global SHAP Analysis")
-st.write(
-    "Global SHAP analysis shows which features have the greatest overall "
-    "influence on the model's predictions."
-)
-st.divider()
+FEATURE_METADATA = {
+    "temperature_2m": {
+        "description": "Air temperature at 2 metres above ground level.",
+        "unit": "°C",
+        "type": "Raw meteorological feature",
+    },
+    "relative_humidity_2m": {
+        "description": "Relative humidity at 2 metres above ground level.",
+        "unit": "%",
+        "type": "Raw meteorological feature",
+    },
+    "wind_speed_10m": {
+        "description": "Wind speed at 10 metres above ground level.",
+        "unit": "m/s",
+        "type": "Raw meteorological feature",
+    },
+    "wind_direction_10m": {
+        "description": "Wind direction at 10 metres above ground level.",
+        "unit": "degrees",
+        "type": "Raw meteorological feature",
+    },
+    "surface_pressure": {
+        "description": "Atmospheric pressure at the surface.",
+        "unit": "hPa",
+        "type": "Raw meteorological feature",
+    },
+    "precipitation": {
+        "description": "Precipitation amount associated with the observation.",
+        "unit": "mm",
+        "type": "Raw meteorological feature",
+    },
+    "city": {
+        "description": "City or location category used by the model.",
+        "unit": None,
+        "type": "Categorical feature",
+    },
+    "weather_verdict": {
+        "description": "Categorical summary of the prevailing weather condition.",
+        "unit": None,
+        "type": "Categorical feature",
+    },
+    "time_of_day": {
+        "description": "Categorical period: Morning, Afternoon, Evening, or Midnight.",
+        "unit": None,
+        "type": "Categorical feature",
+    },
+    "season_region": {
+        "description": "Combined feature representing season and geographic region.",
+        "unit": None,
+        "type": "Categorical engineered feature",
+    },
+    "temp_humidity": {
+        "description": "Interaction between temperature and relative humidity.",
+        "unit": "°C·%",
+        "type": "Engineered interaction feature",
+    },
+    "wind_precip": {
+        "description": "Interaction between wind speed and precipitation.",
+        "unit": "m/s·mm",
+        "type": "Engineered interaction feature",
+    },
+    "pressure_temp": {
+        "description": "Interaction between surface pressure and temperature.",
+        "unit": "hPa·°C",
+        "type": "Engineered interaction feature",
+    },
+    "wind_dir_sin": {
+        "description": "Sine transformation of wind direction.",
+        "unit": None,
+        "type": "Cyclic engineered feature",
+    },
+    "wind_dir_cos": {
+        "description": "Cosine transformation of wind direction.",
+        "unit": None,
+        "type": "Cyclic engineered feature",
+    },
+    "month_sin": {
+        "description": "Sine transformation encoding annual seasonality.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "month_cos": {
+        "description": "Cosine transformation encoding annual seasonality.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "hour_sin": {
+        "description": "Sine transformation encoding daily time patterns.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "hour_cos": {
+        "description": "Cosine transformation encoding daily time patterns.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "dow_sin": {
+        "description": "Sine transformation encoding weekly patterns.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "dow_cos": {
+        "description": "Cosine transformation encoding weekly patterns.",
+        "unit": None,
+        "type": "Cyclic time feature",
+    },
+    "is_weekend": {
+        "description": "Binary indicator for whether the day is a weekend.",
+        "unit": None,
+        "type": "Binary time feature",
+    },
+}
+
+FEATURE_METADATA = get_feature_metadata()
+
+
+def feature_label(feature):
+    return str(feature).replace("_", " ").title()
+
+
+def feature_metadata(feature):
+    return FEATURE_METADATA.get(
+        str(feature),
+        {
+            "description": "Metadata is not available for this feature.",
+            "unit": None,
+            "type": "Unknown feature",
+        },
+    )
+
+st.markdown('<p class="shap-kicker">Model explanations · predictor</p>', unsafe_allow_html=True)
+st.title("Understand predictor influence")
+st.write("See which features most influence PM2.5 and PM10 predictions across the full evaluation dataset.")
+
+
+def compact_description(description, width=58):
+    lines = textwrap.wrap(str(description), width=width)
+    if len(lines) <= 2:
+        return "\n".join(lines)
+    second_line = lines[1][: width - 3].rstrip()
+    return f"{lines[0]}\n{second_line}..."
+
 
 @st.cache_data(ttl=300)
 def get_global_shap(target):
@@ -31,11 +185,13 @@ def get_global_shap(target):
         )
     return response.json()
 
-target = st.selectbox(
-    "Select Target",
-    ["pm25", "pm10"],
-    format_func=lambda x: "PM2.5" if x == "pm25" else "PM10",
-)
+with st.container(border=True):
+    st.markdown("#### Explanation target")
+    target = st.selectbox(
+        "Select target model",
+        ["pm25", "pm10"],
+        format_func=lambda x: "PM2.5" if x == "pm25" else "PM10",
+    )
 
 try:
     result = get_global_shap(target)
@@ -104,13 +260,12 @@ if len(feature_names) > 0:
         st.stop()
 
 # METRICS
-col1, col2, col3 = st.columns(3)
+st.markdown("### Explanation overview")
+col1, col2, col3 = st.columns(3, gap="medium")
 
 with col1:
-    st.metric(
-        "Features Analyzed",
-        len(shap_df),
-    )
+    with st.container(border=True):
+        st.metric("Features analyzed", len(shap_df))
 
 with col2:
     most_important = (
@@ -121,31 +276,52 @@ with col2:
         else "N/A"
     )
 
-    st.metric(
-        "Most Important Feature",
-        most_important,
-    )
+    with st.container(border=True):
+        st.metric("Most important feature", most_important)
 
 with col3:
-    st.metric(
-        "SHAP Samples",
-        len(shap_values),
+    with st.container(border=True):
+        st.metric("SHAP samples", len(shap_values))
+
+st.markdown("### Global feature importance")
+st.caption("Mean absolute SHAP values show the overall influence of each feature on the selected model.")
+
+with st.expander("Feature guide"):
+    st.caption("Feature meanings and categories come from the predictor metadata used by the explanation service.")
+    metadata_df = pd.DataFrame(
+        [
+            {
+                "Feature": feature_label(feature),
+                "Description": compact_description(metadata["description"]),
+                "Unit": metadata["unit"] or "—",
+                "Type": metadata["type"],
+            }
+            for feature in shap_df["feature"].astype(str)
+            for metadata in [feature_metadata(feature)]
+        ]
     )
-
-st.divider()
-
-# GLOBAL FEATURE IMPORTANCE
-st.subheader(
-    f"Global Feature Importance — {target.upper()}"
-)
+    st.dataframe(
+        metadata_df,
+        column_config={
+            "Feature": st.column_config.TextColumn("Feature", width="medium"),
+            "Description": st.column_config.TextColumn(
+                "Description",
+                width="large",
+                help="Compact two-line feature description.",
+            ),
+            "Unit": st.column_config.TextColumn("Unit", width="small"),
+            "Type": st.column_config.TextColumn("Type", width="medium"),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
 
 plot_df = shap_df.copy()
 
 plot_df["feature"] = (
     plot_df["feature"]
     .astype(str)
-    .str.replace("_", " ")
-    .str.title()
+    .map(feature_label)
 )
 
 plot_df = plot_df.sort_values(
@@ -179,23 +355,11 @@ fig.update_layout(
     ),
 )
 
-st.plotly_chart(
-    fig,
-    use_container_width=True,
-)
+with st.container(border=True):
+    st.plotly_chart(fig, use_container_width=True)
 
-st.divider()
-
-# SHAP BEESWARM
-st.subheader(
-    f"SHAP Beeswarm — {target.upper()}"
-)
-
-st.caption(
-    "Each point represents a sampled observation. "
-    "Positive SHAP values push the prediction higher, "
-    "while negative values push it lower."
-)
+st.markdown("### SHAP beeswarm")
+st.caption("Each point is a sampled observation. Points to the right increase the prediction; points to the left decrease it.")
 
 if (
     len(feature_names) == 0
@@ -331,10 +495,7 @@ else:
                 )
             )
 
-        display_names = [
-            feature.replace("_", " ").title()
-            for feature in plotted_features
-        ]
+        display_names = [feature_label(feature) for feature in plotted_features]
 
         fig.add_vline(
             x=0,
@@ -366,10 +527,8 @@ else:
             ),
         )
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True,
-        )
+        with st.container(border=True):
+            st.plotly_chart(fig, use_container_width=True)
 
         st.caption(
             "Red indicates higher feature values and blue indicates "
@@ -377,12 +536,8 @@ else:
             "prediction; points to the left decrease it."
         )
 
-st.divider()
-
-# FEATURE IMPORTANCE DETAILS
-st.subheader(
-    "Feature Importance Details"
-)
+st.markdown("### Feature importance details")
+st.caption("Ranked values behind the global importance chart.")
 
 table_df = shap_df.copy()
 
@@ -398,8 +553,7 @@ table_df.insert(
 table_df["feature"] = (
     table_df["feature"]
     .astype(str)
-    .str.replace("_", " ")
-    .str.title()
+    .map(feature_label)
 )
 
 table_df["importance"] = (
@@ -408,8 +562,41 @@ table_df["importance"] = (
     .round(4)
 )
 
-st.dataframe(
-    table_df,
-    use_container_width=True,
-    hide_index=True,
+table_df.insert(
+    2,
+    "Description",
+    [
+        compact_description(feature_metadata(feature)["description"])
+        for feature in shap_df["feature"].astype(str)
+    ],
 )
+table_df.insert(
+    3,
+    "Unit",
+    [
+        feature_metadata(feature)["unit"] or "—"
+        for feature in shap_df["feature"].astype(str)
+    ],
+)
+table_df.insert(
+    4,
+    "Type",
+    [
+        feature_metadata(feature)["type"]
+        for feature in shap_df["feature"].astype(str)
+    ],
+)
+
+with st.container(border=True):
+    st.dataframe(
+        table_df,
+        column_config={
+            "Description": st.column_config.TextColumn(
+                "Description",
+                width="large",
+                help="Compact two-line feature description.",
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )

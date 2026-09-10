@@ -3,16 +3,31 @@ import requests
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import textwrap
+from resources.forecaster_metadata import get_feature_metadata
+
+st.markdown(
+    """
+    <style>
+    .shap-kicker {
+        color: #38b9ff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.4rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 API_BASE_URL = st.secrets["API_BASE_URL"]
 GLOBAL_SHAP_ENDPOINT = f"{API_BASE_URL}/api/explainer/forecaster/global"
 
-st.title("Global SHAP Analysis — Forecaster")
-st.write(
-    "Global SHAP analysis shows which features have the greatest overall "
-    "influence on the forecaster's predictions for a selected target and horizon."
-)
-st.divider()
+st.markdown('<p class="shap-kicker">Model explanations · forecaster</p>', unsafe_allow_html=True)
+st.title("Understand forecaster influence")
+st.write("See which features most influence PM2.5 and PM10 forecasts at each prediction horizon.")
 
 HORIZON_LABELS = {
     "t": "Current / T",
@@ -21,10 +36,35 @@ HORIZON_LABELS = {
     "t48": "48 Hours",
 }
 
+FEATURE_METADATA = get_feature_metadata()
+
+
+def feature_label(feature):
+    return str(feature).replace("_", " ").title()
+
+
+def feature_metadata(feature):
+    return FEATURE_METADATA.get(
+        str(feature),
+        {
+            "description": "Metadata is not available for this feature.",
+            "unit": None,
+            "type": "Unknown feature",
+        },
+    )
+
 TARGET_LABELS = {
     "pm25": "PM2.5",
     "pm10": "PM10",
 }
+
+def compact_description(description, width=58):
+        lines = textwrap.wrap(str(description), width=width)
+        if len(lines) <= 2:
+            return "\n".join(lines)
+        second_line = lines[1][: width - 3].rstrip()
+        return f"{lines[0]}\n{second_line}..."
+
 
 @st.cache_data(ttl=300)
 def get_global_shap(target, horizon):
@@ -60,21 +100,23 @@ def get_global_shap(target, horizon):
 
 # CONTROLS
 
-col1, col2 = st.columns(2)
+with st.container(border=True):
+    st.markdown("#### Explanation target")
+    col1, col2 = st.columns(2, gap="medium")
 
-with col1:
-    target = st.selectbox(
-        "Select Target",
-        ["pm25", "pm10"],
-        format_func=lambda x: TARGET_LABELS[x],
-    )
+    with col1:
+        target = st.selectbox(
+            "Select target model",
+            ["pm25", "pm10"],
+            format_func=lambda x: TARGET_LABELS[x],
+        )
 
-with col2:
-    horizon = st.selectbox(
-        "Select Horizon",
-        ["t", "t12", "t24", "t48"],
-        format_func=lambda x: HORIZON_LABELS[x],
-    )
+    with col2:
+        horizon = st.selectbox(
+            "Select forecast horizon",
+            ["t", "t12", "t24", "t48"],
+            format_func=lambda x: HORIZON_LABELS[x],
+        )
 
 try:
     result, shap_df = get_global_shap(
@@ -168,49 +210,67 @@ if shap_values.shape[1] != len(feature_names):
 
 # METRICS
 
-col1, col2, col3, col4 = st.columns(4)
+st.markdown("### Explanation overview")
+col1, col2, col3, col4 = st.columns(4, gap="medium")
 
 with col1:
-    st.metric(
-        "Target",
-        target_label,
-    )
+    with st.container(border=True):
+        st.metric("Target", target_label)
 
 with col2:
-    st.metric(
-        "Forecast Horizon",
-        horizon_label,
-    )
+    with st.container(border=True):
+        st.metric("Forecast horizon", horizon_label)
 
 with col3:
-    st.metric(
-        "Features Analyzed",
-        len(shap_df),
-    )
+    with st.container(border=True):
+        st.metric("Features analyzed", len(shap_df))
 
 with col4:
-    st.metric(
-        "SHAP Samples",
-        len(shap_values),
-    )
-
-st.divider()
+    with st.container(border=True):
+        st.metric("SHAP samples", len(shap_values))
 
 
 # GLOBAL FEATURE IMPORTANCE
 
-st.subheader(
-    f"Global Feature Importance — "
-    f"{target_label} ({horizon_label})"
-)
+st.markdown("### Global feature importance")
+st.caption(f"Mean absolute SHAP values for {target_label} at the {horizon_label} horizon.")
+
+with st.expander("Feature guide"):
+    st.caption("Feature meanings and categories come from the forecaster metadata used by the explanation service.")
+    metadata_df = pd.DataFrame(
+        [
+            {
+                "Feature": feature_label(feature),
+                "Description": compact_description(metadata["description"]),
+                "Unit": metadata["unit"] or "—",
+                "Type": metadata["type"].title(),
+            }
+            for feature in shap_df["feature"].astype(str)
+            for metadata in [feature_metadata(feature)]
+        ]
+    )
+    st.dataframe(
+        metadata_df,
+        column_config={
+            "Feature": st.column_config.TextColumn("Feature", width="medium"),
+            "Description": st.column_config.TextColumn(
+                "Description",
+                width="large",
+                help="Compact two-line feature description.",
+            ),
+            "Unit": st.column_config.TextColumn("Unit", width="small"),
+            "Type": st.column_config.TextColumn("Type", width="medium"),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
 
 plot_df = shap_df.copy()
 
 plot_df["feature"] = (
     plot_df["feature"]
     .astype(str)
-    .str.replace("_", " ")
-    .str.title()
+    .map(feature_label)
 )
 
 plot_df = plot_df.sort_values(
@@ -247,20 +307,13 @@ fig.update_layout(
     ),
 )
 
-st.plotly_chart(
-    fig,
-    use_container_width=True,
-)
-
-st.divider()
+with st.container(border=True):
+    st.plotly_chart(fig, use_container_width=True)
 
 
 # SHAP BEESWARM
 
-st.subheader(
-    f"SHAP Beeswarm — "
-    f"{target_label} ({horizon_label})"
-)
+st.markdown("### SHAP beeswarm")
 
 st.caption(
     "Each point represents a sampled observation. "
@@ -438,10 +491,8 @@ fig.update_layout(
     ),
 )
 
-st.plotly_chart(
-    fig,
-    use_container_width=True,
-)
+with st.container(border=True):
+    st.plotly_chart(fig, use_container_width=True)
 
 st.caption(
     "Red indicates higher feature values and blue indicates lower "
@@ -449,14 +500,8 @@ st.caption(
     "points to the left decrease it."
 )
 
-st.divider()
-
-
-# FEATURE IMPORTANCE DETAILS
-
-st.subheader(
-    "Feature Importance Details"
-)
+st.markdown("### Feature importance details")
+st.caption("Ranked values behind the global importance chart.")
 
 table_df = shap_df.copy()
 
@@ -472,11 +517,7 @@ table_df.insert(
 table_df["feature"] = (
     table_df["feature"]
     .astype(str)
-    .str.replace(
-        "_",
-        " ",
-    )
-    .str.title()
+    .map(feature_label)
 )
 
 table_df["importance"] = (
@@ -485,8 +526,41 @@ table_df["importance"] = (
     .round(4)
 )
 
-st.dataframe(
-    table_df,
-    use_container_width=True,
-    hide_index=True,
+table_df.insert(
+    2,
+    "Description",
+    [
+    compact_description(feature_metadata(feature)["description"])
+        for feature in shap_df["feature"].astype(str)
+    ],
 )
+table_df.insert(
+    3,
+    "Unit",
+    [
+        feature_metadata(feature)["unit"] or "—"
+        for feature in shap_df["feature"].astype(str)
+    ],
+)
+table_df.insert(
+    4,
+    "Type",
+    [
+        feature_metadata(feature)["type"].title()
+        for feature in shap_df["feature"].astype(str)
+    ],
+)
+
+with st.container(border=True):
+    st.dataframe(
+        table_df,
+        column_config={
+            "Description": st.column_config.TextColumn(
+                "Description",
+                width="large",
+                help="Compact two-line feature description.",
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
