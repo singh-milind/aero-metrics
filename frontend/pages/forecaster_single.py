@@ -115,6 +115,7 @@ with st.container(border=True):
 
         with target_columns[2]:
             target_time = st.time_input("Target Time", step=timedelta(hours=6))
+            st.write("Please select a time in 6-hour increments (00:00, 06:00, 12:00, 18:00).")
 
     with target_layout[1]:
         selected_city = city_info[city]

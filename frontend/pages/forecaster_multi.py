@@ -72,6 +72,8 @@ with st.container(border=True):
             target_date = st.date_input("Target Date")
         with target_columns[1]:
             target_time = st.time_input("Target Time", step=timedelta(hours=6))
+            st.write("Please select a time in 6-hour increments (00:00, 06:00, 12:00, 18:00).")
+            
     with target_layout[1]:
         st.pydeck_chart(
             pdk.Deck(
