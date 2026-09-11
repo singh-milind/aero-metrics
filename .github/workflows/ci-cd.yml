@@ -64,7 +64,7 @@ jobs:
         run: |
           docker build \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/aero-metrics-frontend:${{ github.sha }} \
-            -f frontend/Dockerfile .
+            -f frontend/dockerfile frontend
 
       - name: Push Frontend image
         run: |
