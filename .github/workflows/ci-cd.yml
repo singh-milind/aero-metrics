@@ -77,29 +77,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Log in to Azure
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Verify Azure configuration
-        run: |
-          echo "Resource group: '${{ secrets.AZURE_RESOURCE_GROUP }}'"
-          echo "API container: '${{ secrets.AZURE_API_CONTAINER_NAME }}'"
-          echo "Frontend container: '${{ secrets.AZURE_FRONTEND_CONTAINER_NAME }}'"
-          echo "Docker Hub username: '${{ secrets.DOCKERHUB_USERNAME }}'"
+
       - name: Deploy API
+        env:
+          RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          API_CONTAINER: ${{ secrets.AZURE_API_CONTAINER_NAME }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          az containerapp update \
-            --name ${{ secrets.AZURE_API_CONTAINER_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/aero-metrics-api:${{ github.sha }}
+          az containerapp update --name "$API_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
 
       - name: Deploy Frontend
+        env:
+          RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          FRONTEND_CONTAINER: ${{ secrets.AZURE_FRONTEND_CONTAINER_NAME }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          az containerapp update \
-            --name ${{ secrets.AZURE_FRONTEND_CONTAINER_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.DOCKERHUB_USERNAME }}/aero-metrics-frontend:${{ github.sha }}
+          az containerapp update --name "$FRONTEND_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-frontend:${{ github.sha }}"
