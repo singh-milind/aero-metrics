@@ -104,15 +104,15 @@ jobs:
           RUNTIME_FETCH_CONTAINER: ${{ secrets.AZURE_RUNTIME_FETCH_CONTAINER_NAME }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          az containerapp update --name "$RUNTIME_FETCH_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
+          az containerapp job update --name "$RUNTIME_FETCH_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
       
       - name: Deploy Data-gathering Container Job 
         env:
           RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          RUNTIME_PROCESS_CONTAINER: ${{ secrets.AZURE_DATA_GATHERING_CONTAINER_NAME }}
+          DATA_GATHERING_CONTAINER: ${{ secrets.AZURE_DATA_GATHERING_CONTAINER_NAME }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          az containerapp update --name "$RUNTIME_PROCESS_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
+          az containerapp job update --name "$DATA_GATHERING_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
 
       - name: Deploy Model-training Container Job 
         env:
@@ -120,4 +120,4 @@ jobs:
           MODEL_BUILD_CONTAINER: ${{ secrets.AZURE_MODEL_TRAIN_CONTAINER_NAME }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          az containerapp update --name "$MODEL_BUILD_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
+          az containerapp job update --name "$MODEL_BUILD_CONTAINER" --resource-group "$RESOURCE_GROUP" --image "$DOCKERHUB_USERNAME/aero-metrics-api:${{ github.sha }}"
