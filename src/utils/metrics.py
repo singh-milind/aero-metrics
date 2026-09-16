@@ -41,20 +41,3 @@ def make_metrics_dict(
 
     return metrics
 
-
-def dump_metrics_json(metrics, model_type,model_sub_type,model_name):
-
-    root_dir = Path(__file__).resolve().parents[1]
-
-    metrics_path = (
-        root_dir
-        / "metrics"
-        / f"{model_type}"
-        / f"{model_sub_type}"
-        / f"{model_name}_metrics.json"
-    )
-
-    metrics_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=4)

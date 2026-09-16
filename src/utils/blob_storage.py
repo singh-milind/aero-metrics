@@ -3,6 +3,7 @@ from azure.storage.blob import BlobServiceClient
 import io
 import joblib
 import pandas as pd
+import json
 
 STORAGE_ACCOUNT_NAME = "aerometricsstrorage"
 
@@ -15,16 +16,6 @@ blob_service_client = BlobServiceClient(
     credential=credential,
 )
 
-
-
-def download_blob(container_name: str, blob_name: str, local_path: str):
-    blob_client = blob_service_client.get_blob_client(
-        container=container_name,
-        blob=blob_name,
-    )
-
-    with open(local_path, "wb") as file:
-        file.write(blob_client.download_blob().readall())
 
 def upload_csv(
     container_name: str,
@@ -60,14 +51,6 @@ def load_csv(
     return df
 
 
-def upload_blob(container_name: str, blob_name: str, local_path: str):
-    blob_client = blob_service_client.get_blob_client(
-        container=container_name,
-        blob=blob_name,
-    )
-
-    with open(local_path, "rb") as file:
-        blob_client.upload_blob(file, overwrite=True)
 
 def download_blob_bytes(container_name: str, blob_name: str) -> bytes:
     blob_client = blob_service_client.get_blob_client(
@@ -107,5 +90,39 @@ def upload_model(
 
     logger.info(
         f"Model uploaded to Azure: {artifact_name} - "
+        f"{container_name}/{blob_name}"
+    )
+    
+def upload_metric(
+    container_name: str,
+    blob_name: str,
+    metric: dict,
+    logger,
+    artifact_name: str,
+):
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name,
+        blob=blob_name,
+    )
+    
+    # Convert existing dictionary into an in-memory buffer
+    
+    json_data = json.dumps(metric,indent=4)
+    
+    buffer = io.BytesIO(
+        json_data.encode("utf-8")
+    )
+
+    # Move to the beginning of the buffer
+    buffer.seek(0)
+
+    # Upload JSON directly to Azure Blob Storage
+    blob_client.upload_blob(
+        buffer,
+        overwrite=True,
+    )
+
+    logger.info(
+        f"Metric uploaded to Azure: {artifact_name} - "
         f"{container_name}/{blob_name}"
     )

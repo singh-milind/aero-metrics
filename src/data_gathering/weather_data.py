@@ -163,5 +163,5 @@ def main(start_date, end_date):
     )
 
     logger.info(
-        "Dataset saved to data/raw/weather_data.csv"
+        "Dataset saved to Azure Blob Storage: data/raw/weather_data.csv"
     )

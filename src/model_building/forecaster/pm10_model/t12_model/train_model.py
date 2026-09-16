@@ -9,7 +9,8 @@ from sklearn.model_selection import TimeSeriesSplit, cross_validate
 from xgboost import XGBRegressor
 
 from src.utils.plot_importance import plot_feature_importance
-from metrics.metrics import make_metrics_dict, dump_metrics_json
+from src.utils.metrics import make_metrics_dict
+from src.utils.blob_storage import upload_metric
 
 
 def train_model(x_train, y_train, logger):
@@ -149,11 +150,12 @@ def train_model(x_train, y_train, logger):
         gap
     )
 
-    dump_metrics_json(
-        metrics,
-        model_type="forecaster",
-        model_sub_type="pm10_model",
-        model_name="t12_model"
+    upload_metric(
+        container_name="metrics",
+        blob_name="forecaster/pm10_model/t12_model_metrics.json",
+        metric=metrics,
+        logger=logger,
+        artifact_name="Forecaster PM 10 t12 Metrics"
     )
 
     logger.info(

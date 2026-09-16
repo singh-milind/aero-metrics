@@ -26,7 +26,4 @@ feature_importance.png
 models/predictor/
 models/forecaster/
 
-
 frontend/.streamlit/secrets.toml
-
-airflow/
