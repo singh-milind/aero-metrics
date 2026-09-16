@@ -5,6 +5,7 @@ import pandas as pd
 from src.city_info import city_info
 from pathlib import Path
 from src.utils.logger import get_logger
+from src.utils.blob_storage import upload_csv
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 logger = get_logger("weather_fetch")
@@ -152,16 +153,13 @@ def main(start_date, end_date):
         logger.error("No data fetched.")
         india_weather_df = pd.DataFrame()
 
-    DATA_DIR = ROOT_DIR / "data" / "raw"
+    csv_data = india_weather_df.to_csv(index=False)
 
-    DATA_DIR.mkdir(
-        parents=True,
-        exist_ok=True
-    )
-
-    india_weather_df.to_csv(
-        DATA_DIR / "weather_data.csv",
-        index=False
+    # Upload the CSV to Azure Blob Storage
+    upload_csv(
+        container_name="data",
+        blob_name="raw/weather_data.csv",
+        csv_data=csv_data
     )
 
     logger.info(

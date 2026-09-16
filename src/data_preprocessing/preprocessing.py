@@ -4,6 +4,7 @@ import numpy as np
 
 from pathlib import Path
 from src.utils.logger import get_logger
+from src.utils.blob_storage import upload_csv,load_csv
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -13,8 +14,14 @@ logger = get_logger("preprocessing")
 RAW_DATA_DIR = ROOT_DIR / "data" / "raw"
 
 try:
-    aqi_df = pd.read_csv(RAW_DATA_DIR / "aqi_data.csv")
-    weather_df = pd.read_csv(RAW_DATA_DIR / "weather_data.csv")
+    aqi_df = load_csv(
+        container_name="data",
+        blob_name="raw/aqi_data.csv"
+    )
+    weather_df = load_csv(
+        container_name="data",
+        blob_name="raw/weather_data.csv"
+    )
     logger.info("Raw datasets loaded successfully.")
 except FileNotFoundError as e:
     logger.error(f"Missing input file: {e.filename}")
@@ -49,13 +56,13 @@ def merge_datasets(aqi_df, weather_df):
 
 merged_df = merge_datasets(aqi_df, weather_df)
 
-INTERIM_DATA_DIR = ROOT_DIR / "data" / "interim"
-INTERIM_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
 try:
-    merged_df.to_csv(
-        INTERIM_DATA_DIR / "merged_data.csv",
-        index=False
+    csv_data = merged_df.to_csv(index=False)
+    # Upload the CSV to Azure Blob Storage
+    upload_csv(
+        container_name="data",
+        blob_name="interim/merged_data.csv",
+        csv_data=csv_data
     )
     logger.info("Merged dataset saved successfully.")
 except Exception as e:

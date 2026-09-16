@@ -9,7 +9,8 @@ from src.utils.logger import get_logger
 from src.model_building.forecaster.pm10_model.t12_model.runtime_features import build_more_features
 from src.model_building.forecaster.pm10_model.t12_model.split_data import split_data
 from src.model_building.forecaster.pm10_model.t12_model.train_model import train_model
-
+from src.utils.blob_storage import load_csv
+from src.utils.blob_storage import upload_model
 
 
 ROOT_DIR = Path(__file__).resolve().parents[5]
@@ -17,11 +18,11 @@ logger = get_logger("pm10_forecaster_t12")
 
 
 def load_data(logger):
-    PROCESSED_DATA_DIR = ROOT_DIR / "data" / "processed"
-    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
-
     try:
-        df = pd.read_csv(PROCESSED_DATA_DIR / "engineered_features.csv")
+        df = load_csv(
+            container_name="data",
+            blob_name="processed/engineered_features.csv"
+        )
         logger.info("Engineered features loaded successfully.")
     except FileNotFoundError as e:
         logger.error(f"Missing input file: {e.filename}")
@@ -30,6 +31,44 @@ def load_data(logger):
         logger.exception(f"Failed to load datasets: {e}")
         raise
     return df
+
+def upload_model_to_blob(model,explainer,global_shap_importance,global_shap_values,X_test, logger):
+
+    upload_model(
+        container_name="models",
+        blob_name="forecaster/pm10/t12_model/pm10_forecaster.pkl",
+        model=model,
+        artifact_name="pm10_forecaster",
+        logger=logger
+    )
+    upload_model(
+        container_name="models",
+        blob_name="forecaster/pm10/t12_model/pm10_explainer.pkl",
+        model=explainer,
+        artifact_name="pm10_explainer",
+        logger=logger
+    )
+    upload_model(
+        container_name="models",
+        blob_name="forecaster/pm10/t12_model/pm10_global_shap_importance.pkl",
+        model=global_shap_importance,
+        artifact_name="pm10_global_shap_importance",
+        logger=logger
+    )
+    upload_model(
+        container_name="models",
+        blob_name="forecaster/pm10/t12_model/pm10_global_shap_values.pkl",
+        model=global_shap_values,
+        logger=logger,
+        artifact_name="pm10_global_shap_values"
+    )
+    upload_model(
+        container_name="models",
+        blob_name="forecaster/pm10/t12_model/pm10_global_shap_feature_values.pkl",
+        model=X_test,
+        logger=logger,
+        artifact_name="pm10_global_shap_feature_values"
+    )
 
 
 def main():
@@ -43,16 +82,7 @@ def main():
     global_shap_values = explainer(X_test)
     global_shap_importance = dict(zip(X_test.columns, abs(global_shap_values.values).mean(axis=0)))
 
-    model_dir = ROOT_DIR / "models" / "forecaster" / "pm10" / "t12_model"
-    
-    model_dir.mkdir(parents=True, exist_ok=True)
-
-    joblib.dump(model, model_dir / "pm10_forecaster_t12.pkl")
-    joblib.dump(explainer, model_dir / "pm10_explainer.pkl")
-    joblib.dump(global_shap_importance, model_dir / "pm10_global_shap.pkl")
-    joblib.dump(global_shap_values, model_dir / "pm10_global_shap_values.pkl")
-    joblib.dump(X_test, model_dir / "pm10_global_shap_feature_values.pkl")
-
+    upload_model_to_blob(model, explainer, global_shap_importance, global_shap_values, X_test, logger)
 if __name__ == "__main__":
     main()
     

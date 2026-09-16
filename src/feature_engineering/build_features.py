@@ -7,17 +7,19 @@ from src.feature_engineering.region import region_map
 from src.feature_engineering.temporal_features import apply_regional_season,add_time_features
 from src.database.ingest_historical_data import main as ingest_historical_data
 from src.utils.logger import get_logger
+from src.utils.blob_storage import upload_csv,load_csv
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 
 logger = get_logger("feature_engineering")
 
 def load_data(logger):
-    INTERIM_DATA_DIR = ROOT_DIR / "data" / "interim"
-    INTERIM_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     try:
-        df = pd.read_csv(INTERIM_DATA_DIR / "merged_data.csv")
+        df = load_csv(
+            container_name="data",
+            blob_name="interim/merged_data.csv"
+        )
         logger.info("Merged dataset loaded successfully.")
     except FileNotFoundError as e:
         logger.error(f"Missing input file: {e.filename}")
@@ -28,11 +30,14 @@ def load_data(logger):
     return df
 
 def save_data(df, logger):
-    PROCESSED_DATA_DIR = ROOT_DIR / "data" / "processed"
-    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    csv_data = df.to_csv(index=False)
 
     try:
-        df.to_csv(PROCESSED_DATA_DIR / "engineered_features.csv", index=False)
+        upload_csv(
+            container_name="data",
+            blob_name="processed/engineered_features.csv",
+            csv_data=csv_data
+        )
         logger.info("Engineered features saved successfully.")
     except Exception as e:
         logger.exception(f"Failed to save engineered features: {e}")
