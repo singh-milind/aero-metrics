@@ -25,5 +25,5 @@ feature_importance.png
 
 models/predictor/
 models/forecaster/
-
+metrics/
 frontend/.streamlit/secrets.toml
