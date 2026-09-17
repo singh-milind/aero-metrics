@@ -41,19 +41,48 @@ def make_metrics_dict(
 
     return metrics
 
-def dump_metrics_json(metrics, model_type,model_sub_type,model_name):
 
-    root_dir = Path(__file__).resolve().parents[1]
+def find_project_root(start_path: Path) -> Path:
+    """
+    Find the project root by locating dvc.yaml.
+    """
+
+    start_path = start_path.resolve()
+
+    # Check the file's directory and all parent directories
+    for directory in [start_path.parent, *start_path.parents]:
+
+        if (directory / "dvc.yaml").exists():
+            return directory
+
+    raise FileNotFoundError(
+        "Project root not found. dvc.yaml is missing."
+    )
+
+def dump_metrics_json(
+    metrics,
+    model_type,
+    model_sub_type,
+    model_name,
+):
+    root_dir = find_project_root(Path(__file__))
 
     metrics_path = (
         root_dir
         / "metrics"
-        / f"{model_type}"
-        / f"{model_sub_type}"
+        / model_type
+        / model_sub_type
         / f"{model_name}_metrics.json"
     )
 
-    metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    with open(metrics_path, "w") as f:
-        json.dump(metrics, f, indent=4)
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(
+            metrics,
+            f,
+            indent=4,
+        )
