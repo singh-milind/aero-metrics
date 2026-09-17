@@ -15,8 +15,16 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY src ./src
 COPY jobs ./jobs
 COPY data ./data
-COPY models ./models
 COPY metrics ./metrics
+
+# Create directories for DVC-generated artifacts
+RUN mkdir -p \
+    models/predictor/pm25 \
+    models/predictor/pm10 \
+    models/forecaster/pm25 \
+    models/forecaster/pm10 \
+    data/interim \
+    data/processed
 
 COPY .dvc ./.dvc
 COPY dvc.yaml .

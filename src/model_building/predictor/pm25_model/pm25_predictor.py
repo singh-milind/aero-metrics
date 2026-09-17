@@ -81,6 +81,7 @@ def main():
     global_shap_values = explainer(X_test)
     global_shap_importance = dict(zip(X_test.columns, abs(global_shap_values.values).mean(axis=0)))
     MODEL_DIR = ROOT_DIR / "models" / "predictor" / "pm25"
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
     upload_model_to_blob(model, explainer, global_shap_importance, global_shap_values, X_test, logger)
     joblib.dump(model, MODEL_DIR / "pm25_predictor.pkl")
     joblib.dump(explainer, MODEL_DIR / "pm25_explainer.pkl")
