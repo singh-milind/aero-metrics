@@ -15,6 +15,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY src ./src
 COPY jobs ./jobs
 COPY data ./data
+COPY models ./models
 COPY metrics ./metrics
 
 COPY .dvc ./.dvc
