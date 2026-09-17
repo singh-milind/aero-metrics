@@ -154,7 +154,9 @@ def main(start_date, end_date):
         india_weather_df = pd.DataFrame()
 
     csv_data = india_weather_df.to_csv(index=False)
-
+    RAW_DATA_DIR = ROOT_DIR / "data" / "raw"
+    RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    india_weather_df.to_csv(RAW_DATA_DIR / "weather_data.csv", index=False)
     # Upload the CSV to Azure Blob Storage
     upload_csv(
         container_name="data",

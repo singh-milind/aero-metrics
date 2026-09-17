@@ -166,7 +166,7 @@ def train_model(x_train, y_train, logger):
         logger=logger,
         artifact_name="Forecaster PM 2.5 t48 Metrics"
     )
-
+    dump_metrics_json(metrics, "forecaster", "pm25_model", "t48_model")
     logger.info(
         "Metrics saved to metrics/forecaster/t48_model_metrics.json"
     )

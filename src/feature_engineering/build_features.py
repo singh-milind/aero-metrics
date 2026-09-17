@@ -30,6 +30,8 @@ def load_data(logger):
     return df
 
 def save_data(df, logger):
+    PROCESSED_DATA_DIR = ROOT_DIR / "data" / "processed"
+    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
     csv_data = df.to_csv(index=False)
 
     try:
@@ -38,6 +40,7 @@ def save_data(df, logger):
             blob_name="processed/engineered_features.csv",
             csv_data=csv_data
         )
+        df.to_csv(PROCESSED_DATA_DIR / "engineered_features.csv", index=False)
         logger.info("Engineered features saved successfully.")
     except Exception as e:
         logger.exception(f"Failed to save engineered features: {e}")

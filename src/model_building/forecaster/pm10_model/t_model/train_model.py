@@ -9,7 +9,7 @@ from sklearn.model_selection import TimeSeriesSplit, cross_validate
 from xgboost import XGBRegressor
 
 from src.utils.plot_importance import plot_feature_importance
-from src.utils.metrics import make_metrics_dict
+from src.utils.metrics import make_metrics_dict,dump_metrics_json
 from src.utils.blob_storage import upload_metric
 
 
@@ -159,6 +159,8 @@ def train_model(x_train, y_train, logger):
         artifact_name="Forecaster PM 10 t Metrics"
     )
 
+    dump_metrics_json(metrics, "forecaster", "pm10_model", "t_model")
+    
     logger.info(
         "Metrics saved to metrics/forecaster/pm10_model/t_model_metrics.json"
     )

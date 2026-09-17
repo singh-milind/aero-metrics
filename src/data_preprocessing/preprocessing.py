@@ -54,8 +54,10 @@ def merge_datasets(aqi_df, weather_df):
         logger.exception(f"Dataset merge failed: {e}")
         raise
 
-merged_df = merge_datasets(aqi_df, weather_df)
+INTERIM_DATA_DIR = ROOT_DIR / "data" / "interim"
+INTERIM_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+merged_df = merge_datasets(aqi_df, weather_df)
 try:
     csv_data = merged_df.to_csv(index=False)
     # Upload the CSV to Azure Blob Storage
@@ -64,6 +66,7 @@ try:
         blob_name="interim/merged_data.csv",
         csv_data=csv_data
     )
+    merged_df.to_csv(INTERIM_DATA_DIR / "merged_data.csv", index=False)
     logger.info("Merged dataset saved successfully.")
 except Exception as e:
     logger.exception(f"Failed to save merged dataset: {e}")

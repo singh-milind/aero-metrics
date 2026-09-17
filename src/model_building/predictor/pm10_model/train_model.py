@@ -6,7 +6,7 @@ import pandas as pd
 
 from sklearn.model_selection import KFold, cross_validate
 from xgboost import XGBRegressor, plot_importance
-from src.utils.metrics import make_metrics_dict
+from src.utils.metrics import make_metrics_dict, dump_metrics_json
 from src.utils.blob_storage import upload_metric
 from src.utils.plot_importance import plot_feature_importance
 
@@ -116,6 +116,7 @@ def train_model(x_train, y_train, logger):
         logger=logger,
         artifact_name="Predictor PM 10 Metrics"
     )
+    dump_metrics_json(metrics, "predictor", "pm10", "predictor_model")
 
     with mlflow.start_run():
 
