@@ -126,3 +126,37 @@ def upload_metric(
         f"Metric uploaded to Azure: {artifact_name} - "
         f"{container_name}/{blob_name}"
     )
+    
+def upload_metadata(
+    container_name: str,
+    blob_name: str,
+    metadata: dict,
+    logger,
+    artifact_name: str,
+):
+    blob_client = blob_service_client.get_blob_client(
+        container=container_name,
+        blob=blob_name,
+    )
+    
+    # Convert existing dictionary into an in-memory buffer
+    
+    json_data = json.dumps(metadata,indent=4)
+    
+    buffer = io.BytesIO(
+        json_data.encode("utf-8")
+    )
+
+    # Move to the beginning of the buffer
+    buffer.seek(0)
+
+    # Upload JSON directly to Azure Blob Storage
+    blob_client.upload_blob(
+        buffer,
+        overwrite=True,
+    )
+
+    logger.info(
+        f"Metadata uploaded to Azure: {artifact_name} - "
+        f"{container_name}/{blob_name}"
+    )

@@ -58,6 +58,7 @@ def main():
             save_data(df, logger)
             logger.info(f"Feature engineering completed. Final dataset has {len(df):,} rows.")
             ingest_historical_data()
+            logger.info("Historical data ingestion completed successfully.")
         except FileNotFoundError as e:
             logger.error(f"File not found: {e.filename}. Ensure that the data gathering step has been completed.")
         except Exception:

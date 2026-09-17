@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from src.utils.logger import get_logger
+from src.utils.blob_storage import upload_metadata,load_csv
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -14,6 +15,10 @@ def load_data(logger):
 
     try:
         df = pd.read_csv(PROCESSED_DATA_DIR / "engineered_features.csv")
+        df = load_csv(
+            container_name="data",
+            blob_name="processed/engineered_features.csv"
+        )
         logger.info("Engineered features loaded successfully.")
     except FileNotFoundError as e:
         logger.error(f"Missing input file: {e.filename}")
@@ -46,6 +51,13 @@ def create_metadata():
     metadata_path = ROOT_DIR / "data" / "processed" / "metadata.json"
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
     pd.Series(metadata).to_json(metadata_path, indent=4)
+    upload_metadata(
+        container_name="data",
+        blob_name="processed/metadata.json",
+        metadata=metadata,
+        logger=logger,
+        artifact_name="metadata"
+    )
     logger.info(f"Metadata created and saved to {metadata_path}")
     
 def main():
