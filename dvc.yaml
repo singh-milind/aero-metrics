@@ -174,11 +174,11 @@ stages:
       - src/model_building/forecaster/pm10_model/t12_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/forecaster/pm10_model/t12_model/pm10_forecaster_t12.pkl
-      - models/forecaster/pm10_model/t12_model/pm10_explainer.pkl
-      - models/forecaster/pm10_model/t12_model/pm10_global_shap.pkl
-      - models/forecaster/pm10_model/t12_model/pm10_global_shap_values.pkl
-      - models/forecaster/pm10_model/t12_model/pm10_global_shap_feature_values.pkl
+      - models/forecaster/pm10/t12_model/pm10_forecaster_t12.pkl
+      - models/forecaster/pm10/t12_model/pm10_explainer.pkl
+      - models/forecaster/pm10/t12_model/pm10_global_shap.pkl
+      - models/forecaster/pm10/t12_model/pm10_global_shap_values.pkl
+      - models/forecaster/pm10/t12_model/pm10_global_shap_feature_values.pkl
     metrics:
       - metrics/forecaster/pm10_model/t12_model_metrics.json
 
@@ -194,11 +194,11 @@ stages:
       - src/model_building/forecaster/pm10_model/t24_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/forecaster/pm10_model/t24_model/pm10_forecaster_t24.pkl
-      - models/forecaster/pm10_model/t24_model/pm10_explainer.pkl
-      - models/forecaster/pm10_model/t24_model/pm10_global_shap.pkl
-      - models/forecaster/pm10_model/t24_model/pm10_global_shap_values.pkl
-      - models/forecaster/pm10_model/t24_model/pm10_global_shap_feature_values.pkl
+      - models/forecaster/pm10/t24_model/pm10_forecaster_t24.pkl
+      - models/forecaster/pm10/t24_model/pm10_explainer.pkl
+      - models/forecaster/pm10/t24_model/pm10_global_shap.pkl
+      - models/forecaster/pm10/t24_model/pm10_global_shap_values.pkl
+      - models/forecaster/pm10/t24_model/pm10_global_shap_feature_values.pkl
     metrics:
       - metrics/forecaster/pm10_model/t24_model_metrics.json
 
@@ -213,11 +213,11 @@ stages:
       - src/model_building/forecaster/pm10_model/t48_model/runtime_features.py
       - data/processed/engineered_features.csv
     outs:
-      - models/forecaster/pm10_model/t48_model/pm10_forecaster_t48.pkl
-      - models/forecaster/pm10_model/t48_model/pm10_explainer.pkl
-      - models/forecaster/pm10_model/t48_model/pm10_global_shap.pkl
-      - models/forecaster/pm10_model/t48_model/pm10_global_shap_values.pkl
-      - models/forecaster/pm10_model/t48_model/pm10_global_shap_feature_values.pkl
+      - models/forecaster/pm10/t48_model/pm10_forecaster_t48.pkl
+      - models/forecaster/pm10/t48_model/pm10_explainer.pkl
+      - models/forecaster/pm10/t48_model/pm10_global_shap.pkl
+      - models/forecaster/pm10/t48_model/pm10_global_shap_values.pkl
+      - models/forecaster/pm10/t48_model/pm10_global_shap_feature_values.pkl
     metrics:
       - metrics/forecaster/pm10_model/t48_model_metrics.json
 
