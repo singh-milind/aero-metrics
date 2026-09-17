@@ -83,6 +83,14 @@ def main():
 
     upload_model_to_blob(model, explainer, global_shap_importance, global_shap_values, X_test, logger)
 
+    model_dir = ROOT_DIR / "models" / "forecaster" / "pm25" / "t48_model"
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(model, model_dir / "pm25_forecaster_t48.pkl")
+    joblib.dump(explainer, model_dir / "pm25_explainer.pkl")
+    joblib.dump(global_shap_importance, model_dir / "pm25_global_shap.pkl")
+    joblib.dump(global_shap_values, model_dir / "pm25_global_shap_values.pkl")
+    joblib.dump(X_test, model_dir / "pm25_global_shap_feature_values.pkl")
 if __name__ == "__main__":
     main()
     

@@ -83,6 +83,14 @@ def main():
     global_shap_importance = dict(zip(X_test.columns, abs(global_shap_values.values).mean(axis=0)))
 
     upload_model_to_blob(model, explainer, global_shap_importance, global_shap_values, X_test, logger)
+    model_dir = ROOT_DIR / "models" / "forecaster" / "pm10" / "t12_model"
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    joblib.dump(model, model_dir / "pm10_forecaster_t12.pkl")
+    joblib.dump(explainer, model_dir / "pm10_explainer.pkl")
+    joblib.dump(global_shap_importance, model_dir / "pm10_global_shap.pkl")
+    joblib.dump(global_shap_values, model_dir / "pm10_global_shap_values.pkl")
+    joblib.dump(X_test, model_dir / "pm10_global_shap_feature_values.pkl")
 if __name__ == "__main__":
     main()
     
