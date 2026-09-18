@@ -50,8 +50,8 @@ def get_global_shap(target: str):
     else:
         shap_source = shap_raw
 
-    TOP_FEATURES = 20
-    MAX_SAMPLES = 3000
+    TOP_FEATURES = 15
+    MAX_SAMPLES = 1000
 
     shap_rows = len(shap_source)
     feature_rows = len(feature_values_raw)

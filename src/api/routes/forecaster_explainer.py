@@ -141,7 +141,7 @@ def get_global_shap(target: str, horizon: str):
 
     logger.info("Selected SHAP artifacts")
 
-    MAX_SAMPLES = 3000
+    MAX_SAMPLES = 1000
     TOP_FEATURES = 20
 
     # Extract numeric SHAP values from SHAP Explanation

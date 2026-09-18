@@ -4,6 +4,8 @@ import io
 import joblib
 import pandas as pd
 import json
+from datetime import date, datetime
+import numpy as np
 
 STORAGE_ACCOUNT_NAME = "aerometricsstrorage"
 
@@ -159,4 +161,53 @@ def upload_metadata(
     logger.info(
         f"Metadata uploaded to Azure: {artifact_name} - "
         f"{container_name}/{blob_name}"
+    )
+    
+
+
+def numpy_json_serializer(obj):
+    """
+    Convert NumPy and pandas objects
+    into JSON-serializable Python values.
+    """
+
+    # NumPy integer types
+    if isinstance(obj, np.integer):
+        return int(obj)
+
+    # NumPy floating-point types
+    if isinstance(obj, np.floating):
+        value = float(obj)
+
+        if not np.isfinite(value):
+            return None
+
+        return value
+
+    # NumPy boolean
+    if isinstance(obj, np.bool_):
+        return bool(obj)
+
+    # NumPy arrays
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+
+    # Pandas timestamp
+    if isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+
+    # Python date and datetime
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+
+    # Python float NaN / Infinity
+    if isinstance(obj, float):
+        if not np.isfinite(obj):
+            return None
+
+        return obj
+
+    raise TypeError(
+        f"Object of type {type(obj).__name__} "
+        "is not JSON serializable"
     )
